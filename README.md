@@ -34,7 +34,7 @@ Hover over the pill to open the list. Each row shows your last message; click it
 
 When a reply is ready, Pulse plays a two-tap chime. The pitch is based on the session, so you'll hear the same tone when that agent finishes again. You can mute sounds from the panel or menu bar.
 
-The pill stays visible across Spaces, and its border animates while agents work. Drag the pill or the panel's title area to move them together.
+Each moving pulse around the pill's border represents one agent currently working: three pulses means three active agents. As agents finish, their pulses fade away. The pill stays visible across Spaces; drag it or the panel's title area to move them together.
 
 <table>
   <tr>
