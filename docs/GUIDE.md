@@ -121,7 +121,15 @@ swift build --disable-sandbox
 .build/debug/Pulse --diagnose
 ```
 
-Diagnostic output includes your session titles and project paths. Keep it local.
+The `--diagnose` output includes your session titles and project paths. Keep it local.
+
+For a shareable report of versions, running apps, scan times, and source counts:
+
+```sh
+/Applications/Pulse.app/Contents/MacOS/Pulse --diagnose-health 2>/dev/null
+```
+
+This report excludes chat text, titles, session IDs, project paths, and raw source errors. It stops waiting after twenty seconds and identifies any source still scanning. It does not request iTerm automation permission.
 
 ## Documentation screenshots
 

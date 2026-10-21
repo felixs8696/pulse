@@ -14,6 +14,10 @@ extension Notification.Name {
 @main
 enum PulseMain {
     static func main() {
+        if CommandLine.arguments.contains("--diagnose-health") {
+            ScanDiagnostics.run()
+            return
+        }
         if CommandLine.arguments.contains("--diagnose") {
             let result = SessionScanner().scan()
             let encoder = JSONEncoder(); encoder.outputFormatting = [.prettyPrinted, .sortedKeys]; encoder.dateEncodingStrategy = .iso8601
