@@ -6,6 +6,7 @@ public final class SessionScanner: @unchecked Sendable {
     private let home: URL
     private let fm = FileManager.default
     private var cache: [String: (Date, Int, Session)] = [:]
+    private var codexMetadataDates: [String: Date] = [:]
     private var claudeFiles: [URL] = []
     private var cursorClaudeWorkspaces: [String: String] = [:]
     private var lastDiscovery = Date.distantPast
@@ -75,7 +76,8 @@ public final class SessionScanner: @unchecked Sendable {
                 .first { JSON.object($0["item_json"] ?? "").flatMap(MessagePreview.codexItem) != nil }
             let message = userItem.flatMap { JSON.object($0["item_json"] ?? "").flatMap(MessagePreview.codexItem) }
             let historyDate = userItem?["created_at_ms"].flatMap(Double.init).map { Date(timeIntervalSince1970: $0 / 1000) }
-            if let cached = cache["codex:" + id], cached.0 == modified.0, cached.1 == modified.1 {
+            if let cached = cache["codex:" + id], cached.0 == modified.0, cached.1 == modified.1,
+               codexMetadataDates[id] == metadataDate {
                 var session = cached.2
                 if let message { session.lastUserMessage = message }
                 if session.lastUserMessageAt == nil { session.lastUserMessageAt = historyDate }
@@ -96,6 +98,7 @@ public final class SessionScanner: @unchecked Sendable {
             var cachedSession = s
             cachedSession.lastUserMessageAt = transcriptMessageDate
             cache["codex:" + id] = (modified.0, modified.1, cachedSession)
+            codexMetadataDates[id] = metadataDate
             return s
         }
     }
