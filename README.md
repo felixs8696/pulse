@@ -24,30 +24,29 @@
 
 ## How it works
 
-Pulse shows your Claude Code, Codex, and Cursor sessions in a small floating pill. You can see how many agents are working and how many have replied without switching between apps to check.
+Pulse keeps your Claude Code, Codex, and Cursor sessions in one list. A floating pill shows how many agents are working and how many are waiting for you.
 
-Hover over the pill to see the list. Each session shows the last message you sent, so you can tell what it was about. Click a session to open it in its original app, or click the pill to keep the panel open.
+Hover over the pill to open the list. Each row shows your last message; click it to return to that session in its original app. Click the pill to keep the panel open while you work.
 
-You can also:
-
-- Pin conversations you want to come back to.
+- Pin conversations you want to keep in the Pinned tab.
 - Search by message, title, or project.
-- Mark replies read or unread yourself. Opening a session doesn't clear it.
-- Hear a two-tap chime when a reply is ready, with a pitch based on the session. Mute it from the panel or menu bar.
+- Mark replies read when you've dealt with them. You can mark them unread again, and opening a session doesn't clear it.
 
-The pill stays visible across Spaces. Its border animates while agents are working, and you can drag it or the panel's title area to move both together.
+When a reply is ready, Pulse plays a two-tap chime. The pitch is based on the session, so you'll hear the same tone when that agent finishes again. You can mute sounds from the panel or menu bar.
+
+The pill stays visible across Spaces, and its border animates while agents work. Drag the pill or the panel's title area to move them together.
 
 <table>
   <tr>
     <td width="50%" valign="top">
       <img src="docs/images/waiting.png" alt="Waiting tab with two completed example replies and explicit mark-read controls.">
       <strong>Waiting</strong><br>
-      Replies you haven't marked read yet. This tab only includes today; older replies move to Older.
+      Today's replies you haven't marked read, plus requests for input. Previous days' replies move to Older.
     </td>
     <td width="50%" valign="top">
       <img src="docs/images/pinned.png" alt="Pinned tab keeping two example conversations close, with their current status visible.">
       <strong>Pinned</strong><br>
-      Conversations you've pinned stay here across days, with their current status.
+      Pinned conversations stay here across days. You can still see whether they're working or waiting.
     </td>
   </tr>
 </table>
@@ -66,19 +65,19 @@ Pulse is a menu-bar app, so it won't show up in the Dock. You can turn on launch
 
 | Agent | Where you use it | Setup |
 | :--- | :--- | :--- |
-| **Claude Code** | iTerm, Cursor's Claude extension, Cursor terminal | Install the included Claude hooks. For Cursor, install the included session router too. |
-| **Codex** | Codex Desktop | No extra setup for chats stored locally. |
-| **Cursor agents** | Cursor | Install the included `pulse-router.vsix`. |
+| Claude Code | iTerm, Cursor's Claude extension, Cursor terminal | Install the included Claude hooks. For Cursor, install the included session router too. |
+| Codex | Codex Desktop | No extra setup for chats stored locally. |
+| Cursor agents | Cursor | Install the included `pulse-router.vsix`. |
 
-The ZIP includes the installers. Follow the [setup guide](DISTRIBUTION.md#connect-your-apps) for Claude hooks and the Cursor extension.
+Follow the [setup guide](DISTRIBUTION.md#connect-your-apps) to install the Claude hooks and Cursor extension included in the ZIP.
 
-The list only includes conversations you interact with directly, so background agents don't inflate the counts. Claude chat, Cowork, and ChatGPT chat aren't supported. Codex sessions open in Desktop, not a CLI pane.
+Pulse tracks the conversations you interact with directly and excludes child agents and background tasks. Claude chat, Cowork, and ChatGPT chat aren't supported. Codex session links open in Codex Desktop. Returning to the original CLI pane isn't supported.
 
 ## Privacy and limitations
 
-Pulse reads session files and databases already on your Mac. It doesn't upload conversations or collect analytics, and you don't need an account or API key. Pins, read state, and preferences are saved locally. The downloadable ZIP doesn't include any of your session history or settings.
+Pulse reads session files and databases on your Mac and saves pins, read state, and preferences locally. It doesn't upload conversations or collect analytics. You don't need an account or API key, and exported ZIPs don't include your session history or settings.
 
-It relies on each app's local files and links, so updates to those apps can break tracking or navigation. Remote sessions only appear if the app has stored them locally. The [user guide](docs/GUIDE.md#tracking-and-limits) has more detail on what Pulse can detect.
+Updates to Claude Code, Codex, or Cursor can change their file formats or links and break tracking or navigation. Remote sessions only appear if the app has stored them locally. See the [user guide](docs/GUIDE.md#tracking-and-limits) for tracking details and known limits.
 
 ## Build it yourself
 
