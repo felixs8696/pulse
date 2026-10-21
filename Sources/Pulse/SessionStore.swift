@@ -38,7 +38,7 @@ final class SessionStore: ObservableObject {
     @Published private var closedTerminals: Set<String> = []
 
     init() {
-        pillOnEveryDisplay = UserDefaults.standard.bool(forKey: "pillOnEveryDisplay")
+        pillOnEveryDisplay = UserDefaults.standard.object(forKey: "pillOnEveryDisplay") as? Bool ?? true
         soundsEnabled = UserDefaults.standard.object(forKey: "attentionSoundsEnabled") as? Bool ?? true
         pins = Set(UserDefaults.standard.stringArray(forKey: "pins") ?? [])
         sessionTones = UserDefaults.standard.data(forKey: "sessionTonesV1")

@@ -8,7 +8,7 @@ Hover the pill for a preview. Move away to collapse it, or click the pill once t
 
 The pill stays above your windows and across Spaces. Lavender counts show working agents; white counts show sessions waiting for you today. Each working agent has a subtle trace around the pill's border. Working logos in the expanded panel dim together. Both effects respect macOS Reduce Motion.
 
-To put a pill on your laptop screen and external monitors, enable **Show pill on every display** in the panel's top-right menu beside the sound button. Hover or click a pill to open the session panel on that display. Counts, pins, read state, and sounds are shared. Extra pills don't play extra alerts. Each display remembers its own pill position, including when you rearrange or reconnect it. With the option off, a single pill stays on the display where you last used it. This setting controls connected displays, while Spaces are macOS virtual desktops.
+A pill appears on your laptop screen and external monitors by default. You can turn off **Show pill on every display** in the panel's top-right menu beside the sound button. Hover or click a pill to open the session panel on that display. Counts, pins, read state, and sounds are shared. Extra pills don't play extra alerts. Each display remembers its own pill position, including when you rearrange or reconnect it. With the option off, a single pill stays on the display where you last used it. This setting controls connected displays, while Spaces are macOS virtual desktops.
 
 Drag the pill, the panel's title area, or its empty background to move both surfaces together. Their position persists. The panel opens on whichever side has room, keeping a constant gap from the pill. Use the menu-bar menu to reset its position.
 
