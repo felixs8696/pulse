@@ -14,7 +14,9 @@ The app discovers sessions belonging to the person running it. This download con
 
 **Cursor:** in Cursor's Extensions panel, open the **…** menu → **Install from VSIX…** and choose the included `pulse-router.vsix`. This enables opening the exact chat or Claude tab. The Claude Code extension must also be installed for Claude tabs.
 
-**Claude Code:** for exact session routing and completion states, install the included hooks. In Terminal, type `python3 `, drag `Claude setup/setup-claude.py` into Terminal, and press Return. Keep `claude-hook.py` beside the installer. Requires Python 3 (Apple's Command Line Tools provide it). The installer backs up your Claude settings and preserves existing hooks. Keep existing Claude sessions open. Current Claude Code versions normally reload hook settings automatically. Continue the session with your next message or tool action so Pulse receives its pane identity. If it does not appear, run `/hooks` in that session to inspect the Pulse hooks and review any pending changes. To remove Pulse's hooks, run the same command with ` --remove` appended.
+**Claude Code:** in Pulse, click **Connect Claude Code** in the setup card or top-right menu. This installs the included local hooks, backs up Claude’s settings, and preserves existing hooks. Keep your chats open and continue with your next message or tool action. Current Claude Code versions normally reload the settings automatically. If a chat does not appear, use `/hooks` in that chat to inspect the Pulse hooks and review any pending changes. The setup needs Python 3 (Apple’s Command Line Tools provide it).
+
+For manual setup, run `python3 "/Applications/Pulse.app/Contents/Resources/setup-claude.py"`. Add ` --remove` to remove Pulse’s hooks.
 
 **iTerm:** allow Pulse's macOS Automation request to control iTerm so it can identify and open your live panes.
 

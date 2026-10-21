@@ -18,6 +18,10 @@ final class SessionStore: ObservableObject {
     var expanded: Bool { presentation.expanded }
     var heldOpen: Bool { presentation.heldOpen }
     @Published var showConnections = false
+    @Published private(set) var claudeConnection = ClaudeConnection.inspect()
+    @Published private(set) var connectingClaude = false
+    @Published private(set) var claudeConnectionError: String?
+    @Published private(set) var claudeConnectionHint: String?
     @Published var activeSessionActionsID: String?
     @Published var pillOnEveryDisplay: Bool { didSet {
         defaults.set(pillOnEveryDisplay, forKey: "pillOnEveryDisplay")
@@ -67,6 +71,7 @@ final class SessionStore: ObservableObject {
         }
     }
     func refresh() {
+        claudeConnection = ClaudeConnection.inspect()
         scanner.refresh(pinnedIDs: pins) { [weak self] event in
             Task { @MainActor [weak self] in self?.receiveScan(event) }
         }
@@ -78,6 +83,29 @@ final class SessionStore: ObservableObject {
             guard let self else { return }
             if let panes { self.openITermPanes = panes }
             self.checkingTerminals = false
+        }
+    }
+    var needsClaudeConnection: Bool {
+        claudeConnection != .installed && sessions.contains { $0.provider == .claude && !$0.hasOpenDestination }
+    }
+    func connectClaude() {
+        guard !connectingClaude, claudeConnection != .disabled else { return }
+        connectingClaude = true
+        claudeConnectionError = nil
+        presentation.holdOpen()
+        showConnections = true
+        Task {
+            defer { connectingClaude = false }
+            do {
+                try await ClaudeConnectionInstaller.install()
+                claudeConnection = ClaudeConnection.inspect()
+                guard claudeConnection == .installed else {
+                    claudeConnectionError = "Claude hooks could not be verified. Check /hooks in your Claude session."
+                    return
+                }
+                claudeConnectionHint = "Connected. Continue your current Claude chat with your next message. No restart needed. If it doesn’t appear, check /hooks in that chat."
+                refresh()
+            } catch { claudeConnectionError = error.localizedDescription }
         }
     }
     private func receiveScan(_ event: SessionScanCoordinator.Event) {

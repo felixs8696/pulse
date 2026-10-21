@@ -73,7 +73,7 @@ Pulse is a menu-bar app, so it won't show up in the Dock. You can turn on launch
 
 | Agent | Where you use it | Setup |
 | :--- | :--- | :--- |
-| Claude Code | iTerm, Cursor's Claude extension, Cursor terminal | Install the included Claude hooks. For Cursor, install the included session router too. |
+| Claude Code | iTerm, Cursor's Claude extension, Cursor terminal | Click **Connect Claude Code** in Pulse. For Cursor, install the included session router too. |
 | Codex | Codex Desktop | No extra setup for chats stored locally. |
 | Cursor agents | Cursor | Install the included `pulse-router.vsix`. |
 

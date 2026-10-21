@@ -160,6 +160,7 @@ struct ShelfView: View {
         VStack(spacing: 0) {
             header
             if store.showConnections { connections }
+            else if store.needsClaudeConnection { claudeConnectionCard }
             search
             filters
             Divider().overlay(Ink.rule).padding(.top, 14)
@@ -199,6 +200,10 @@ struct ShelfView: View {
             SoundToggleButton(store: store)
             Menu {
                 Button(store.showConnections ? "Hide connections" : "Connections & setup") { store.showConnections.toggle(); store.presentation.holdOpen() }
+                if store.claudeConnection != .installed {
+                    Button("Connect Claude Code") { store.connectClaude() }
+                        .disabled(store.connectingClaude || store.claudeConnection == .disabled)
+                }
                 Button("Mark displayed replies read") { store.markDisplayedRead() }
                 Button("Refresh now") { store.refresh() }
                 Divider()
@@ -272,9 +277,37 @@ struct ShelfView: View {
                     if !source.available { Text(source.message).font(.system(size: 10)).foregroundStyle(Ink.waiting).fixedSize(horizontal: false, vertical: true) }
                 }
             }
-            Text("Claude approvals use local hooks. Run the setup script in the project to enable precise tracking for new sessions.")
-                .font(.system(size: 10)).foregroundStyle(Ink.muted).fixedSize(horizontal: false, vertical: true)
+            claudeConnectionContent
         }.padding(12).background(.white.opacity(0.04), in: RoundedRectangle(cornerRadius: 10)).padding(.horizontal, 18).padding(.bottom, 12)
+    }
+    private var claudeConnectionCard: some View {
+        claudeConnectionContent.padding(12)
+            .background(.white.opacity(0.04), in: RoundedRectangle(cornerRadius: 10))
+            .padding(.horizontal, 18).padding(.bottom, 12)
+    }
+    private var claudeConnectionContent: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            if store.claudeConnection == .installed {
+                Text(store.claudeConnectionHint ?? "Claude hooks installed. Keep using your current chats to connect their live panes.")
+                    .font(.system(size: 11)).foregroundStyle(Ink.muted)
+            } else if store.claudeConnection == .disabled {
+                Text("Claude hooks are disabled in your Claude settings. Enable them in Claude to connect your live chats.")
+                    .font(.system(size: 11)).foregroundStyle(Ink.muted)
+            } else {
+                HStack(spacing: 8) {
+                    Text("Connect your Claude chats").font(.system(size: 12, weight: .medium))
+                    Spacer(minLength: 4)
+                    Button(store.connectingClaude ? "Connecting…" : "Connect Claude Code") { store.connectClaude() }
+                        .font(.system(size: 11, weight: .medium))
+                        .buttonStyle(.bordered).tint(Ink.accent).disabled(store.connectingClaude)
+                }
+                Text("Adds local hooks for live panes and reply alerts. Backs up your Claude settings and keeps existing hooks. Your chats stay open.")
+                    .font(.system(size: 10)).foregroundStyle(Ink.muted)
+            }
+            if let error = store.claudeConnectionError {
+                Text(error).font(.system(size: 10)).foregroundStyle(Ink.waiting)
+            }
+        }.fixedSize(horizontal: false, vertical: true)
     }
 }
 

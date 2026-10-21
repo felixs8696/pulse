@@ -3,6 +3,9 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+from unittest import mock
+import contextlib
+import io
 
 
 def load(name):
@@ -27,6 +30,35 @@ class HookTests(unittest.TestCase):
         setup.merge(settings, command, remove=True)
         self.assertEqual(settings["hooks"]["Stop"][0]["hooks"][0]["command"], "existing")
         self.assertEqual(settings["model"], "keep")
+
+    def test_installer_backs_up_settings_and_preserves_existing_hooks(self):
+        with tempfile.TemporaryDirectory() as root:
+            home = Path(root)
+            folder = home / ".claude"
+            folder.mkdir()
+            target = folder / "settings.json"
+            original = '{"model":"keep","hooks":{"Stop":[{"hooks":[{"type":"command","command":"existing"}]}]}}'
+            target.write_text(original)
+            with mock.patch.object(Path, "home", return_value=home), mock.patch.object(setup.sys, "argv", ["setup-claude.py"]), contextlib.redirect_stdout(io.StringIO()):
+                setup.main()
+            self.assertEqual(next(folder.glob("settings.json.pulse-*.bak")).read_text(), original)
+            settings = json.loads(target.read_text())
+            self.assertEqual(settings["model"], "keep")
+            self.assertEqual(settings["hooks"]["Stop"][0]["hooks"][0]["command"], "existing")
+            self.assertTrue((home / ".local/share/pulse/claude-hook.py").exists())
+            self.assertIn("UserPromptSubmit", settings["hooks"])
+
+    def test_installer_refuses_malformed_settings_without_changing_them(self):
+        with tempfile.TemporaryDirectory() as root:
+            home = Path(root)
+            folder = home / ".claude"
+            folder.mkdir()
+            target = folder / "settings.json"
+            target.write_text("{broken")
+            with mock.patch.object(Path, "home", return_value=home), mock.patch.object(setup.sys, "argv", ["setup-claude.py"]):
+                with self.assertRaises(json.JSONDecodeError):
+                    setup.main()
+            self.assertEqual(target.read_text(), "{broken")
 
     def test_event_state_and_terminal_capture(self):
         with tempfile.TemporaryDirectory() as root:
