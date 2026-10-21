@@ -3,9 +3,7 @@ import Foundation
 public enum MessagePreview {
     public static func clean(_ text: String) -> String? {
         var result = text
-        for tag in ["environment_context", "user_instructions", "system-reminder", "permissions instructions"] {
-            result = result.replacingOccurrences(of: "<\(tag)>[\\s\\S]*?</\(tag)>", with: "", options: .regularExpression)
-        }
+        var unwrappedContext = stripClientContext(from: &result)
         // Codex wraps attachment metadata ahead of the user's actual request. Extract
         // before whitespace folding and truncation so a long file list cannot hide it.
         let filesHeader = #"\A\s*# Files mentioned by the user:"#
@@ -18,6 +16,12 @@ public enum MessagePreview {
                 // An attachment-only turn should not reuse the previous turn's query.
                 return "[Attachment]"
             }
+        }
+        unwrappedContext = stripClientContext(from: &result) || unwrappedContext
+        // A request heading belongs to the generated envelope only when we
+        // actually removed context. The same heading in ordinary prose is valid.
+        if unwrappedContext, let heading = result.range(of: #"\A\s*## My request:[ \t]*\r?\n"#, options: .regularExpression) {
+            result.removeSubrange(heading)
         }
         let imageTag = #"(?s)<image\b(?=[^>]*\bpath=)[^>]*>.*?</image>"#
         if result.range(of: imageTag, options: .regularExpression) != nil {
@@ -33,9 +37,45 @@ public enum MessagePreview {
         return String(result.split(whereSeparator: \.isWhitespace).joined(separator: " ").prefix(1600))
     }
 
+    private static func stripClientContext(from result: inout String) -> Bool {
+        // Providers identify user turns structurally. Desktop clients sometimes
+        // embed extra context in those turns. Only unwrap known, whole-line
+        // envelopes at the boundaries, preserving ordinary XML, Markdown and code.
+        let tags = ["environment_context", "user_instructions", "system-reminder",
+                    "permissions instructions", "in-app-browser-context"]
+        var removed = false
+        var changed = true
+        while changed {
+            changed = false
+            for tag in tags {
+                let name = NSRegularExpression.escapedPattern(for: tag)
+                let close = "</" + name + ">"
+                let block = "<" + name + "(?:\\s[^>]*)?>(?:(?!" + close + ")[\\s\\S])*" + close
+                let leading = "\\A\\s*" + block + "(?:[ \\t]*\\r?\\n|[ \\t]*\\z)"
+                let trailing = "(?:\\A|(?<=\\n))[ \\t]*" + block + "\\s*\\z"
+                for pattern in [leading, trailing] {
+                    if let range = result.range(of: pattern, options: .regularExpression) {
+                        result.removeSubrange(range)
+                        removed = true
+                        changed = true
+                    }
+                }
+            }
+        }
+        return removed
+    }
+
     private static func content(_ value: Any?) -> String? {
-        if let preview = clean(JSON.text(value)) { return preview }
-        if let blocks = value as? [[String: Any]], blocks.contains(where: {
+        let blocks = value as? [[String: Any]] ?? []
+        // Keep block boundaries until envelope removal has finished. Flattening
+        // with spaces makes client metadata indistinguishable from adjacent text.
+        let text = value as? String ?? blocks.compactMap { block -> String? in
+            let type = (block["type"] as? String ?? "text").lowercased()
+            guard ["text", "input_text", "inputtext"].contains(type) else { return nil }
+            return block["text"] as? String
+        }.joined(separator: "\n")
+        if let preview = clean(text) { return preview }
+        if blocks.contains(where: {
             ["image", "input_image", "image_url", "input_file", "file"].contains($0["type"] as? String ?? "")
         }) { return "[Attachment]" }
         return nil
