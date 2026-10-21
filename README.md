@@ -63,6 +63,8 @@ Hover over the pill to open your session list. Each row shows your last message.
 2. Drag **Pulse.app** into **Applications** and open it.
 3. Hover the pill to see your sessions. Press **⌃ Space** to show or hide the panel.
 
+Sound and reply banners are on by default. Banners stay until you dismiss them or send another message in that chat. The pill appears on every display, and the panel starts on Pinned. You can change these settings in the app.
+
 Pulse is a menu-bar app, so it won't show up in the Dock. You can turn on launch at login from its menu.
 
 > The app is ad-hoc signed and hasn't been notarized by Apple yet. If macOS blocks it, try opening the app, then go to **System Settings → Privacy & Security → Open Anyway**. Only do this for a copy you trust. More details are in the [installation guide](DISTRIBUTION.md).

@@ -47,9 +47,9 @@ final class SessionStore: ObservableObject {
 
     init() {
         pillOnEveryDisplay = UserDefaults.standard.object(forKey: "pillOnEveryDisplay") as? Bool ?? true
-        replyBannersEnabled = UserDefaults.standard.bool(forKey: "replyBannersEnabled")
+        replyBannersEnabled = UserDefaults.standard.object(forKey: "replyBannersEnabled") as? Bool ?? true
         replyBannerDuration = (UserDefaults.standard.object(forKey: "replyBannerDuration") as? Int)
-            .flatMap(ReplyBannerDuration.init(rawValue:)) ?? .fiveSeconds
+            .flatMap(ReplyBannerDuration.init(rawValue:)) ?? .untilClicked
         soundsEnabled = UserDefaults.standard.object(forKey: "attentionSoundsEnabled") as? Bool ?? true
         pins = Set(UserDefaults.standard.stringArray(forKey: "pins") ?? [])
         sessionTones = UserDefaults.standard.data(forKey: "sessionTonesV1")
