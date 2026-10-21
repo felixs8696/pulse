@@ -7,7 +7,9 @@ import CoreGraphics
 import ServiceManagement
 import PulseCore
 
-extension Notification.Name { static let resetShelf = Notification.Name("resetPulse") }
+extension Notification.Name {
+    static let previewReplyBanner = Notification.Name("previewReplyBanner")
+    static let resetShelf = Notification.Name("resetPulse") }
 
 @main
 enum PulseMain {
@@ -43,6 +45,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     let store = SessionStore()
     private var panel: ShelfPanel!
     private var shelfPanel: ShelfPanel!
+    private let replyBanners = ReplyBannerController()
     private var displayPills: [String: ShelfPanel] = [:]
     private var displayPositions = UserDefaults.standard.data(forKey: "displayPillPositionsV1")
         .flatMap { try? JSONDecoder().decode(DisplayPillPositions.self, from: $0) } ?? DisplayPillPositions()
@@ -109,6 +112,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         NotificationCenter.default.addObserver(self, selector: #selector(resetPosition), name: .resetShelf, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(screenChanged), name: NSApplication.didChangeScreenParametersNotification, object: nil)
         NSWorkspace.shared.notificationCenter.addObserver(self, selector: #selector(wokeUp), name: NSWorkspace.didWakeNotification, object: nil)
+        store.completedReplies.sink { [weak self] sessions in
+            guard let self, !self.store.expanded, !self.dragging else { return }
+            self.presentReplyBanners(sessions)
+        }.store(in: &subscriptions)
+        store.$replyBannersEnabled.dropFirst().filter { !$0 }.sink { [weak self] _ in
+            self?.replyBanners.dismissAll()
+        }.store(in: &subscriptions)
+        NotificationCenter.default.addObserver(self, selector: #selector(previewReplyBanner), name: .previewReplyBanner, object: nil)
         store.start()
     }
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool { toggle(); return true }
@@ -212,6 +223,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         panel.orderFrontRegardless()
         savePosition()
     }
+    private func presentReplyBanners(_ sessions: [Session]) {
+        // Use the display under the pointer, without moving the pinned session shelf.
+        let target = NSScreen.screens.first { $0.frame.contains(NSEvent.mouseLocation) }
+        let pill = target.flatMap { displayPills[displayID($0)] } ?? panel!
+        guard let screen = pill.screen ?? target ?? NSScreen.main else { return }
+        replyBanners.enqueue(sessions, pill: pill, screen: screen.visibleFrame) { [weak self] session in
+            guard let self else { return }
+            if session.nativeID == "banner-preview" { self.store.presentation.holdOpen() }
+            else { self.store.open(session) }
+        }
+    }
+    @objc private func previewReplyBanner() {
+        guard store.replyBannersEnabled else { return }
+        let sample = Session(provider: .codex, nativeID: "banner-preview", title: "Your agent’s reply is ready", project: "Pulse", updatedAt: Date(), state: .ready,
+                             lastUserMessage: "Click a reply banner to return to its conversation.")
+        store.presentation.dismiss()
+        presentReplyBanners([sample])
+    }
     private func updateHover() {
         hoverTask?.cancel()
         guard !dragging, store.activeSessionActionsID == nil else { return }
@@ -236,6 +265,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
     private func showShelf(_ expanded: Bool) {
         guard shelfPanel != nil, !dragging else { return }
+        if expanded { replyBanners.dismissAll() }
         if !expanded { store.activeSessionActionsID = nil }
         animationGeneration += 1
         let generation = animationGeneration
@@ -277,6 +307,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         layout(expanded: store.expanded); savePosition(); reconcileDisplayPills()
     }
     @objc private func screenChanged() {
+        replyBanners.dismissAll()
         guard !dragging else { return }
         let currentID = displayPills.first { $0.value === panel }?.key
         if let target = NSScreen.screens.first(where: { displayID($0) == currentID }) ?? NSScreen.main {
@@ -298,6 +329,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private func setDragging(_ active: Bool) {
         hoverTask?.cancel()
         if active {
+            replyBanners.dismissAll()
             dragging = true
             panel.followsDragPointer = true
             joinWindowsForDrag()

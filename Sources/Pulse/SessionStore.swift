@@ -1,5 +1,6 @@
 import AppKit
 import SwiftUI
+import Combine
 import PulseCore
 
 @MainActor
@@ -21,6 +22,10 @@ final class SessionStore: ObservableObject {
     @Published var pillOnEveryDisplay: Bool { didSet {
         defaults.set(pillOnEveryDisplay, forKey: "pillOnEveryDisplay")
     } }
+    @Published var replyBannersEnabled: Bool { didSet {
+        defaults.set(replyBannersEnabled, forKey: "replyBannersEnabled")
+    } }
+    let completedReplies = PassthroughSubject<[Session], Never>()
     @Published private var sessionTones: SessionTones
     @Published var soundsEnabled: Bool { didSet {
         defaults.set(soundsEnabled, forKey: "attentionSoundsEnabled")
@@ -39,6 +44,7 @@ final class SessionStore: ObservableObject {
 
     init() {
         pillOnEveryDisplay = UserDefaults.standard.object(forKey: "pillOnEveryDisplay") as? Bool ?? true
+        replyBannersEnabled = UserDefaults.standard.bool(forKey: "replyBannersEnabled")
         soundsEnabled = UserDefaults.standard.object(forKey: "attentionSoundsEnabled") as? Bool ?? true
         pins = Set(UserDefaults.standard.stringArray(forKey: "pins") ?? [])
         sessionTones = UserDefaults.standard.data(forKey: "sessionTonesV1")
@@ -67,8 +73,13 @@ final class SessionStore: ObservableObject {
                 let live = next.filter { self.isVisible($0) }
                 let newAttention = self.attentionTracker.update(live, availableProviders: Set(result.sources.filter(\.available).map(\.provider)))
                 let todayIDs = Set(next.filter { SessionScope.isToday($0) }.map(\.id))
+                let readyIDs = newAttention.filter { todayIDs.contains($0) }
                 if self.soundsEnabled {
-                    self.chimes.play(newAttention.filter { todayIDs.contains($0) }, tones: self.sessionTones.overrides)
+                    self.chimes.play(readyIDs, tones: self.sessionTones.overrides)
+                }
+                if self.replyBannersEnabled, !readyIDs.isEmpty {
+                    let byID = Dictionary(live.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+                    self.completedReplies.send(readyIDs.compactMap { byID[$0] })
                 }
                 if self.sessions != next { self.sessions = next }
                 if self.sources != result.sources { self.sources = result.sources }

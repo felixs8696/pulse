@@ -202,6 +202,10 @@ struct ShelfView: View {
                 Button("Mark displayed replies read") { store.markDisplayedRead() }
                 Button("Refresh now") { store.refresh() }
                 Divider()
+                Toggle("Show reply banners", isOn: $store.replyBannersEnabled)
+                if store.replyBannersEnabled {
+                    Button("Preview reply banner") { NotificationCenter.default.post(name: .previewReplyBanner, object: nil) }
+                }
                 Toggle("Show pill on every display", isOn: $store.pillOnEveryDisplay)
                 Button("Reset pill position") { NotificationCenter.default.post(name: .resetShelf, object: nil) }
                 Button("Quit Pulse", role: .destructive) { NSApplication.shared.terminate(nil) }
@@ -641,5 +645,49 @@ struct DragHandle: NSViewRepresentable {
                 dragWindow = nil
             } else { onClick?() }
         }
+    }
+}
+
+/// A completion is an invitation to return to a conversation, not an acknowledgment.
+struct ReplyBannerView: View {
+    let session: Session
+    let open: () -> Void
+    let dismiss: () -> Void
+    let hover: (Bool) -> Void
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 12) {
+            Button(action: open) {
+                HStack(alignment: .top, spacing: 12) {
+                    SessionLogo(session: session, workingBrightness: 1).padding(.top, 2)
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack {
+                            Text("Reply ready").font(.system(size: 10, weight: .medium))
+                            Spacer(minLength: 8)
+                            Text(session.hostLabel).font(.system(size: 10)).lineLimit(1)
+                        }.foregroundStyle(Ink.muted)
+                        Text(session.title).font(.system(size: 13, weight: .semibold))
+                            .foregroundStyle(Ink.text).lineLimit(1)
+                        Text(session.lastUserMessage ?? "Click to open the conversation")
+                            .font(.system(size: 11)).foregroundStyle(Ink.muted).lineLimit(2)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                }.frame(maxWidth: .infinity, alignment: .leading).contentShape(Rectangle())
+            }.buttonStyle(.plain).accessibilityLabel("Open reply: " + session.title)
+            Button(action: dismiss) {
+                Image(systemName: "xmark").font(.system(size: 9, weight: .semibold))
+                    .foregroundStyle(Ink.muted).frame(width: 22, height: 22).contentShape(Rectangle())
+            }.buttonStyle(.plain).help("Dismiss banner").accessibilityLabel("Dismiss banner")
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .background {
+            RoundedRectangle(cornerRadius: 18).fill(.ultraThinMaterial)
+                .overlay(RoundedRectangle(cornerRadius: 18).fill(Ink.surface.opacity(0.94)))
+                .overlay(RoundedRectangle(cornerRadius: 18).strokeBorder(.white.opacity(0.13), lineWidth: 0.7))
+        }
+        .padding(12)
+        .preferredColorScheme(.dark)
+        .onHover(perform: hover)
     }
 }
