@@ -235,7 +235,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         }
         replyBanners.enqueue(sessions, placements: placements, duration: store.replyBannerDuration, preview: preview) { [weak self] session in
             guard let self else { return }
-            if session.nativeID == "banner-preview" { self.store.presentation.holdOpen() }
+            if session.nativeID.hasPrefix("banner-preview") { self.store.presentation.holdOpen() }
             else { self.store.open(session) }
         }
     }
@@ -244,7 +244,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         let sample = Session(provider: .codex, nativeID: "banner-preview", title: "Your agent’s reply is ready", project: "Pulse", updatedAt: Date(), state: .ready,
                              lastUserMessage: "Click a reply banner to return to its conversation.")
         store.presentation.dismiss()
-        presentReplyBanners([sample], preview: true)
+        let second = Session(provider: .claude, nativeID: "banner-preview-claude", title: "Another conversation finished", project: "Pulse", updatedAt: Date(), state: .ready,
+                             lastUserMessage: "Each chat gets its own banner. New replies update that chat’s card.")
+        presentReplyBanners([second, sample], preview: true)
     }
     private func updateHover() {
         hoverTask?.cancel()

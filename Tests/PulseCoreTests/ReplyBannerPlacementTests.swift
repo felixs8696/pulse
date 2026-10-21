@@ -27,4 +27,21 @@ struct ReplyBannerPlacementTests {
         #expect(banner.frame.minY == screen.minY)
         #expect(screen.contains(banner.frame))
     }
+    @Test func stacksGrowWithoutOverlappingAndStayReachableNearScreenEdges() {
+        for screen in [CGRect(x: 0, y: 0, width: 1440, height: 900), CGRect(x: -1440, y: 200, width: 1440, height: 900)] {
+            for y in [screen.minY + 116, screen.maxY - 18] {
+                let pill = ShelfPlacement(anchor: CGPoint(x: screen.maxX - 18, y: y), screen: screen).pillFrame
+                let banner = ReplyBannerPlacement(pill: pill, screen: screen)
+                let pair = banner.stackFrame(count: 2)
+                #expect(pair.height == 248)
+                #expect(pair.width == banner.frame.width)
+                #expect(pair.minX == banner.frame.minX)
+                #expect(screen.contains(pair))
+                let overflow = banner.stackFrame(count: 100)
+                #expect(overflow.height == screen.height)
+                #expect(screen.contains(overflow))
+            }
+        }
+    }
+
 }
