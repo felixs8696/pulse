@@ -153,6 +153,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             },
             onClick: { [weak self, weak window] in
                 guard let self, let window else { return }
+                self.replyBanners.dismissAll()
                 let changed = self.activatePill(window)
                 guard self.panel === window else { return }
                 if changed && self.store.expanded {
@@ -224,11 +225,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         savePosition()
     }
     private func presentReplyBanners(_ sessions: [Session], preview: Bool = false) {
+        if store.replyBannerDuration == .untilClicked { hoverTask?.cancel() }
         // Use the display under the pointer, without moving the pinned session shelf.
         let target = NSScreen.screens.first { $0.frame.contains(NSEvent.mouseLocation) }
         let pill = target.flatMap { displayPills[displayID($0)] } ?? panel!
         guard let screen = pill.screen ?? target ?? NSScreen.main else { return }
-        replyBanners.enqueue(sessions, pill: pill, screen: screen.visibleFrame, preview: preview) { [weak self] session in
+        replyBanners.enqueue(sessions, pill: pill, screen: screen.visibleFrame, duration: store.replyBannerDuration, preview: preview) { [weak self] session in
             guard let self else { return }
             if session.nativeID == "banner-preview" { self.store.presentation.holdOpen() }
             else { self.store.open(session) }
@@ -243,7 +245,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
     private func updateHover() {
         hoverTask?.cancel()
-        guard !dragging, store.activeSessionActionsID == nil else { return }
+        guard !dragging, store.activeSessionActionsID == nil, !replyBanners.holdsUntilClicked else { return }
         let inside = pillHovered || shelfHovered
         store.presentation.pointerChanged(inside: inside)
         hoverTask = Task { @MainActor [weak self] in
@@ -431,6 +433,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         if store.expanded { shelfPanel.makeKey() }
     }
     @objc func toggle() {
+        replyBanners.dismissAll()
         hoverTask?.cancel()
         if !store.expanded, store.pillOnEveryDisplay,
            let screen = NSScreen.screens.first(where: { $0.frame.contains(NSEvent.mouseLocation) }),

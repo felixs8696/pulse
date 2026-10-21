@@ -204,6 +204,11 @@ struct ShelfView: View {
                 Divider()
                 Toggle("Show reply banners", isOn: $store.replyBannersEnabled)
                 if store.replyBannersEnabled {
+                    Picker("Banner duration", selection: $store.replyBannerDuration) {
+                        ForEach(ReplyBannerDuration.allCases, id: \.self) { duration in
+                            Text(duration.label).tag(duration)
+                        }
+                    }.pickerStyle(.menu)
                     Button("Preview reply banner") { NotificationCenter.default.post(name: .previewReplyBanner, object: nil) }
                 }
                 Toggle("Show pill on every display", isOn: $store.pillOnEveryDisplay)

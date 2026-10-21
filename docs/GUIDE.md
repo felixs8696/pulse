@@ -135,6 +135,6 @@ The renderer builds a temporary entry point against Pulse's real SwiftUI views, 
 
 Enable **Show reply banners** in the panel’s top-right menu to get a temporary card beside the pill when a reply is ready. It’s off by default. **Preview reply banner** lets you try it.
 
-The card stays for five seconds. Hover to keep it open, click to open the conversation, or use the close button to dismiss it. Multiple replies appear in a queue. Opening or dismissing a banner doesn’t mark a reply read.
+Under **Banner duration**, choose 5, 10, 15, 30, or 60 seconds, or **Until clicked**. The default is five seconds. Timed banners pause while hovered. **Until clicked** keeps the banner visible until you click it, click the pill, or use its close button. Simply hovering over the pill leaves it in place. Clicking a banner opens the conversation. Multiple replies appear in a queue. Opening or dismissing a banner doesn’t mark a reply read.
 
 Banners appear on the display under your pointer. They stay out of the way while the session panel is open or you’re dragging it. They use the same completion events as the chime, so old replies and approval requests don’t trigger them. Muting the chime leaves banners enabled. These are custom app windows, with no macOS notification sound or notification permission required.

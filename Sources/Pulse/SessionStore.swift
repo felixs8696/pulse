@@ -25,6 +25,9 @@ final class SessionStore: ObservableObject {
     @Published var replyBannersEnabled: Bool { didSet {
         defaults.set(replyBannersEnabled, forKey: "replyBannersEnabled")
     } }
+    @Published var replyBannerDuration: ReplyBannerDuration { didSet {
+        defaults.set(replyBannerDuration.rawValue, forKey: "replyBannerDuration")
+    } }
     let completedReplies = PassthroughSubject<[Session], Never>()
     @Published private var sessionTones: SessionTones
     @Published var soundsEnabled: Bool { didSet {
@@ -45,6 +48,8 @@ final class SessionStore: ObservableObject {
     init() {
         pillOnEveryDisplay = UserDefaults.standard.object(forKey: "pillOnEveryDisplay") as? Bool ?? true
         replyBannersEnabled = UserDefaults.standard.bool(forKey: "replyBannersEnabled")
+        replyBannerDuration = (UserDefaults.standard.object(forKey: "replyBannerDuration") as? Int)
+            .flatMap(ReplyBannerDuration.init(rawValue:)) ?? .fiveSeconds
         soundsEnabled = UserDefaults.standard.object(forKey: "attentionSoundsEnabled") as? Bool ?? true
         pins = Set(UserDefaults.standard.stringArray(forKey: "pins") ?? [])
         sessionTones = UserDefaults.standard.data(forKey: "sessionTonesV1")

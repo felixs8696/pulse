@@ -30,8 +30,11 @@ final class ReplyBannerController {
     private var hovered = false
     private var closing = false
     private var generation = 0
+    private var duration = ReplyBannerDuration.fiveSeconds
+    var holdsUntilClicked: Bool { current != nil && duration == .untilClicked }
 
-    func enqueue(_ sessions: [Session], pill: NSWindow, screen: CGRect, preview: Bool = false, open: @escaping (Session) -> Void) {
+    func enqueue(_ sessions: [Session], pill: NSWindow, screen: CGRect, duration: ReplyBannerDuration = .fiveSeconds, preview: Bool = false, open: @escaping (Session) -> Void) {
+        self.duration = duration
         self.pill = pill
         self.screen = screen
         self.open = open
@@ -91,9 +94,9 @@ final class ReplyBannerController {
 
     private func scheduleExpiry() {
         expiry?.cancel()
-        guard current != nil, !hovered, !closing else { return }
+        guard current != nil, !hovered, !closing, let seconds = duration.seconds else { return }
         expiry = Task { @MainActor [weak self] in
-            try? await Task.sleep(for: .seconds(5))
+            try? await Task.sleep(for: .seconds(seconds))
             guard !Task.isCancelled else { return }
             self?.dismissCurrent()
         }
