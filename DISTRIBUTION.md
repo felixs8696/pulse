@@ -21,6 +21,7 @@ The app discovers sessions belonging to the person running it. This download con
 ## Use
 
 - Hover the pill to expand, drag it to move, or press **Control–Space** to toggle. If another app or macOS already uses that shortcut, it may conflict.
+- Enable **Show pill on every display** in the panel's top-right menu to add a pill to each connected monitor. Hover or click one to open the panel there. Alerts play once, regardless of the number of displays.
 - Pin sessions to keep them in **Pinned**. **Working** shows running agents; **Waiting** shows today's unread replies and requests for input. Older activity goes in **Older**.
 - Use a row's three-dot menu to pin it or mark a reply read. Find it in Today or Pinned to mark it unread again. The same menu sets its completion tone from 1 (low) to 100 (high), with a preview and reset. Choices are saved only in Pulse.
 - A soft two-tap chime plays when a reply is ready; its pitch varies by session. Sound and launch-at-login controls are in the menu bar.

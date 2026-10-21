@@ -18,6 +18,9 @@ final class SessionStore: ObservableObject {
     var heldOpen: Bool { presentation.heldOpen }
     @Published var showConnections = false
     @Published var activeSessionActionsID: String?
+    @Published var pillOnEveryDisplay: Bool { didSet {
+        defaults.set(pillOnEveryDisplay, forKey: "pillOnEveryDisplay")
+    } }
     @Published private var sessionTones: SessionTones
     @Published var soundsEnabled: Bool { didSet {
         defaults.set(soundsEnabled, forKey: "attentionSoundsEnabled")
@@ -35,6 +38,7 @@ final class SessionStore: ObservableObject {
     @Published private var closedTerminals: Set<String> = []
 
     init() {
+        pillOnEveryDisplay = UserDefaults.standard.bool(forKey: "pillOnEveryDisplay")
         soundsEnabled = UserDefaults.standard.object(forKey: "attentionSoundsEnabled") as? Bool ?? true
         pins = Set(UserDefaults.standard.stringArray(forKey: "pins") ?? [])
         sessionTones = UserDefaults.standard.data(forKey: "sessionTonesV1")

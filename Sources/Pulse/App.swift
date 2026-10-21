@@ -3,6 +3,7 @@ import SwiftUI
 import Combine
 import Carbon
 import QuartzCore
+import CoreGraphics
 import ServiceManagement
 import PulseCore
 
@@ -42,6 +43,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     let store = SessionStore()
     private var panel: ShelfPanel!
     private var shelfPanel: ShelfPanel!
+    private var displayPills: [String: ShelfPanel] = [:]
+    private var displayPositions = UserDefaults.standard.data(forKey: "displayPillPositionsV1")
+        .flatMap { try? JSONDecoder().decode(DisplayPillPositions.self, from: $0) } ?? DisplayPillPositions()
     private var statusItem: NSStatusItem!
     private var soundMenuItem: NSMenuItem?
     private var subscriptions: Set<AnyCancellable> = []
@@ -69,20 +73,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         if let other = peers.first(where: { $0.processIdentifier != ProcessInfo.processInfo.processIdentifier }) {
             other.activate(options: []); NSApplication.shared.terminate(nil); return
         }
-        panel = ShelfPanel(contentRect: .zero, styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
-        // Keep native controls in the same appearance when focus or drag tracking changes.
-        panel.appearance = NSAppearance(named: .darkAqua)
-        panel.title = "Pulse"; panel.identifier = NSUserInterfaceItemIdentifier("PulsePanel")
-        panel.isOpaque = false; panel.backgroundColor = .clear; panel.hasShadow = true
-        panel.level = .statusBar
-        panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary, .ignoresCycle]
-        panel.hidesOnDeactivate = false; panel.isReleasedWhenClosed = false
-        panel.isMovableByWindowBackground = false
-        panel.delegate = self
-        panel.contentView = NSHostingView(rootView: ShelfPillView(store: store,
-            onHover: { [weak self] inside in self?.pillHovered = inside; self?.updateHover() },
-            onClick: { [weak self] in self?.togglePill() },
-            onDragChange: { [weak self] active in self?.setDragging(active); return self?.panel }))
+        panel = makePillPanel()
         shelfPanel = ShelfPanel(contentRect: .zero, styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
         shelfPanel.appearance = NSAppearance(named: .darkAqua)
         shelfPanel.title = "Pulse Sessions"
@@ -100,6 +91,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         } else { resetPosition() }
         layout(expanded: false)
         panel.orderFrontRegardless()
+        reconcileDisplayPills()
         createMenu()
         registerHotKey()
         store.$presentation.map(\.expanded).removeDuplicates().sink { [weak self] expanded in
@@ -107,6 +99,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         }.store(in: &subscriptions)
         store.$activeSessionActionsID.dropFirst().removeDuplicates().sink { [weak self] _ in
             DispatchQueue.main.async { self?.updateHover() }
+        }.store(in: &subscriptions)
+        store.$pillOnEveryDisplay.dropFirst().removeDuplicates().sink { [weak self] _ in
+            DispatchQueue.main.async { self?.reconcileDisplayPills() }
         }.store(in: &subscriptions)
         store.objectWillChange.sink { [weak self] in
             DispatchQueue.main.async { self?.updateMenuTitle() }
@@ -117,6 +112,106 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         store.start()
     }
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool { toggle(); return true }
+    private func displayID(_ screen: NSScreen) -> String {
+        guard let number = screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber else { return screen.localizedName }
+        if let uuid = CGDisplayCreateUUIDFromDisplayID(number.uint32Value)?.takeRetainedValue() {
+            return CFUUIDCreateString(nil, uuid) as String
+        }
+        return number.stringValue
+    }
+    private func screen(at anchor: NSPoint) -> NSScreen? {
+        NSScreen.screens.first { $0.frame.contains(NSPoint(x: anchor.x - 30, y: anchor.y - 58)) }
+    }
+    private func makePillPanel() -> ShelfPanel {
+        let window = ShelfPanel(contentRect: .zero, styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
+        window.appearance = NSAppearance(named: .darkAqua)
+        window.title = "Pulse"; window.identifier = NSUserInterfaceItemIdentifier("PulsePanel")
+        window.isOpaque = false; window.backgroundColor = .clear; window.hasShadow = true
+        window.level = .statusBar
+        window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary, .ignoresCycle]
+        window.hidesOnDeactivate = false; window.isReleasedWhenClosed = false
+        window.isMovableByWindowBackground = false
+        window.delegate = self
+        window.contentView = NSHostingView(rootView: ShelfPillView(store: store,
+            onHover: { [weak self, weak window] inside in
+                guard let self, let window else { return }
+                if inside { _ = self.activatePill(window) }
+                guard self.panel === window else { return }
+                self.pillHovered = inside
+                self.updateHover()
+            },
+            onClick: { [weak self, weak window] in
+                guard let self, let window else { return }
+                let changed = self.activatePill(window)
+                guard self.panel === window else { return }
+                if changed && self.store.expanded {
+                    self.store.presentation.holdOpen()
+                    self.shelfPanel.makeKey()
+                } else { self.togglePill() }
+            },
+            onDragChange: { [weak self, weak window] active in
+                guard let self, let window else { return nil }
+                if active {
+                    self.store.activeSessionActionsID = nil
+                    _ = self.activatePill(window)
+                }
+                guard self.panel === window else { return nil }
+                self.setDragging(active)
+                return self.panel
+            }))
+        return window
+    }
+    /// All pills share one store and one scanner. Move the existing session panel to the chosen pill.
+    @discardableResult private func activatePill(_ window: ShelfPanel) -> Bool {
+        guard panel !== window, !dragging, store.activeSessionActionsID == nil else { return false }
+        hoverTask?.cancel()
+        savePosition()
+        animationGeneration += 1
+        panel.removeChildWindow(shelfPanel)
+        shelfPanel.orderOut(nil)
+        panel = window
+        topRight = NSPoint(x: window.frame.maxX, y: window.frame.maxY)
+        pillHovered = false; shelfHovered = false
+        panel.addChildWindow(shelfPanel, ordered: .below)
+        layout(expanded: store.expanded)
+        if store.expanded { showShelf(true) }
+        savePosition()
+        return true
+    }
+    private func reconcileDisplayPills() {
+        guard panel != nil, shelfPanel != nil, !dragging,
+              let activeScreen = screen(at: topRight) ?? NSScreen.main else { return }
+        let activeID = displayID(activeScreen)
+        // A drag can cross onto a display that already has a pill. Move that spare back
+        // to the source display, keeping exactly one pill on each connected display.
+        if let oldID = displayPills.first(where: { $0.value === panel })?.key, oldID != activeID {
+            displayPills.removeValue(forKey: oldID)
+            if let spare = displayPills.removeValue(forKey: activeID) {
+                if store.pillOnEveryDisplay, let oldScreen = NSScreen.screens.first(where: { displayID($0) == oldID }) {
+                    let anchor = displayPositions.anchor(displayID: oldID, screen: oldScreen.visibleFrame)
+                    spare.setFrame(ShelfPlacement(anchor: anchor, screen: oldScreen.visibleFrame).pillFrame, display: true)
+                    displayPills[oldID] = spare
+                } else { spare.close() }
+            }
+        }
+        displayPills[activeID] = panel
+        let screens = store.pillOnEveryDisplay ? NSScreen.screens : [activeScreen]
+        let wanted = Set(screens.map(displayID))
+        for id in Array(displayPills.keys) where !wanted.contains(id) {
+            displayPills.removeValue(forKey: id)?.close()
+        }
+        for screen in screens {
+            let id = displayID(screen)
+            if id == activeID { continue }
+            let pill = displayPills[id] ?? makePillPanel()
+            let anchor = displayPositions.anchor(displayID: id, screen: screen.visibleFrame)
+            pill.setFrame(ShelfPlacement(anchor: anchor, screen: screen.visibleFrame).pillFrame, display: true)
+            displayPills[id] = pill
+            pill.orderFrontRegardless()
+        }
+        panel.orderFrontRegardless()
+        savePosition()
+    }
     private func updateHover() {
         hoverTask?.cancel()
         guard !dragging, store.activeSessionActionsID == nil else { return }
@@ -179,18 +274,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     @objc func resetPosition() {
         guard let screen = NSScreen.main else { return }
         topRight = NSPoint(x: screen.visibleFrame.maxX - 18, y: screen.visibleFrame.maxY - 18)
-        layout(expanded: store.expanded); savePosition()
+        layout(expanded: store.expanded); savePosition(); reconcileDisplayPills()
     }
     @objc private func screenChanged() {
         guard !dragging else { return }
-        clampAnchor(); layout(expanded: store.expanded)
+        let currentID = displayPills.first { $0.value === panel }?.key
+        if let target = NSScreen.screens.first(where: { displayID($0) == currentID }) ?? NSScreen.main {
+            topRight = displayPositions.anchor(displayID: displayID(target), screen: target.visibleFrame)
+        }
+        clampAnchor(); layout(expanded: store.expanded); reconcileDisplayPills()
     }
-    @objc private func wokeUp() { store.refresh(); panel.orderFrontRegardless() }
+    @objc private func wokeUp() {
+        store.refresh()
+        screenChanged()
+        for pill in displayPills.values { pill.orderFrontRegardless() }
+    }
     func windowDidMove(_ notification: Notification) {
         guard !resizing, notification.object as? NSWindow === panel else { return }
         guard !dragging else { return }
         topRight = NSPoint(x: panel.frame.maxX, y: panel.frame.maxY)
-        savePosition(); layout(expanded: store.expanded)
+        savePosition(); layout(expanded: store.expanded); reconcileDisplayPills()
     }
     private func setDragging(_ active: Bool) {
         hoverTask?.cancel()
@@ -203,7 +306,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             panel.followsDragPointer = false
             dragging = false
             topRight = NSPoint(x: panel.frame.maxX, y: panel.frame.maxY)
-            clampAnchor(); layout(expanded: store.expanded); savePosition()
+            clampAnchor(); layout(expanded: store.expanded); savePosition(); reconcileDisplayPills()
         }
     }
     private func joinWindowsForDrag() {
@@ -253,7 +356,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         dragPresentation = nil
         resizing = false
     }
-    private func savePosition() { UserDefaults.standard.set([topRight.x, topRight.y], forKey: "pillTopRight") }
+    private func savePosition() {
+        UserDefaults.standard.set([topRight.x, topRight.y], forKey: "pillTopRight")
+        if let screen = screen(at: topRight) {
+            displayPositions.record(anchor: topRight, displayID: displayID(screen), screen: screen.visibleFrame)
+            if let data = try? JSONEncoder().encode(displayPositions) {
+                UserDefaults.standard.set(data, forKey: "displayPillPositionsV1")
+            }
+        }
+    }
     private func createMenu() {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         if let image = BrandArtwork.image("pulse-mark")?.copy() as? NSImage {
@@ -289,6 +400,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
     @objc func toggle() {
         hoverTask?.cancel()
+        if !store.expanded, store.pillOnEveryDisplay,
+           let screen = NSScreen.screens.first(where: { $0.frame.contains(NSEvent.mouseLocation) }),
+           let pill = displayPills[displayID(screen)] { activatePill(pill) }
         store.presentation.toggleVisibility()
         panel.orderFrontRegardless()
         if store.expanded { shelfPanel.makeKey() }

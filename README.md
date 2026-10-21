@@ -32,13 +32,14 @@ Hover over the pill to open your session list. Each row shows your last message.
 - Search by message, title, or project.
 - Mark replies read when you've dealt with them. You can mark them unread again, and opening a session doesn't clear it.
 - Mute sounds from the panel or menu bar.
+- To see a pill on each connected monitor, open the top-right menu and enable **Show pill on every display**.
 
 ## Features
 
 - Claude Code, Codex, and Cursor sessions in one list, with counts for agents working and waiting for you.
 - One moving pulse around the pill's border per working agent. Three pulses means three active agents. As agents finish, their pulses fade away.
 - A two-tap chime when a reply is ready. Each session keeps its own tone. Set its pitch from 1 (low) to 100 (high), or keep the automatic tone.
-- A floating pill that stays visible across Spaces.
+- A floating pill that stays visible across Spaces, with an option to show it on every connected display.
 
 <table>
   <tr>

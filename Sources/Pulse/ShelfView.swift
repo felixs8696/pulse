@@ -202,6 +202,7 @@ struct ShelfView: View {
                 Button("Mark displayed replies read") { store.markDisplayedRead() }
                 Button("Refresh now") { store.refresh() }
                 Divider()
+                Toggle("Show pill on every display", isOn: $store.pillOnEveryDisplay)
                 Button("Reset pill position") { NotificationCenter.default.post(name: .resetShelf, object: nil) }
                 Button("Quit Pulse", role: .destructive) { NSApplication.shared.terminate(nil) }
             } label: { Image(systemName: "ellipsis").foregroundStyle(Ink.muted).frame(width: 26, height: 26) }
