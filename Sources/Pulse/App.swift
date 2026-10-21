@@ -105,6 +105,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         store.$presentation.map(\.expanded).removeDuplicates().sink { [weak self] expanded in
             self?.showShelf(expanded)
         }.store(in: &subscriptions)
+        store.$activeSessionActionsID.dropFirst().removeDuplicates().sink { [weak self] _ in
+            DispatchQueue.main.async { self?.updateHover() }
+        }.store(in: &subscriptions)
         store.objectWillChange.sink { [weak self] in
             DispatchQueue.main.async { self?.updateMenuTitle() }
         }.store(in: &subscriptions)
@@ -116,7 +119,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool { toggle(); return true }
     private func updateHover() {
         hoverTask?.cancel()
-        guard !dragging else { return }
+        guard !dragging, store.activeSessionActionsID == nil else { return }
         let inside = pillHovered || shelfHovered
         store.presentation.pointerChanged(inside: inside)
         hoverTask = Task { @MainActor [weak self] in
@@ -138,6 +141,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
     private func showShelf(_ expanded: Bool) {
         guard shelfPanel != nil, !dragging else { return }
+        if !expanded { store.activeSessionActionsID = nil }
         animationGeneration += 1
         let generation = animationGeneration
         let wasVisible = shelfPanel.isVisible

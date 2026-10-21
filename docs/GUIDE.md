@@ -38,7 +38,7 @@ Cursor's router selects the matching workspace and exact chat, Claude tab, or re
 
 ## Read, unread, and Waiting
 
-Opening a session **doesn't** mark it read. Use the envelope button or right-click menu to **Mark read** or **Mark unread**. **Mark all read** applies only to the displayed list.
+Opening a session **doesn't** mark it read. Open the row's three-dot menu or right-click to **Mark read** or **Mark unread**. The three-dot menu also lets you pin or unpin a session. **Mark all read** applies only to the displayed list.
 
 Read state is stored locally for that specific reply. A later response can return to Waiting. Marking unread doesn't play a sound. It also doesn't bypass the daily expiry: at local midnight, previous days' replies move to Older without being deleted or marked handled. Pinning keeps a conversation accessible but doesn't keep its old replies in Waiting.
 
@@ -46,7 +46,9 @@ Source-app unread status is separate from Pulse's explicit read state. Child age
 
 ## Completion sounds
 
-A soft two-tap chime plays when a tracked reply becomes ready. A stable hash of the session ID selects its pitch from 24 notes, so a session keeps its tone across restarts. Different sessions can share a note. Right-click a row and choose **Preview session sound** to hear it.
+A soft two-tap chime plays when a tracked reply becomes ready. By default, a stable hash of the session ID selects its pitch from 24 notes. Different sessions can share a note.
+
+Open a row's three-dot menu to set its **Completion tone** from 1 (low) to 100 (high). Releasing the slider previews the tone, and **Preview** plays it again. Choices are saved locally per session across restarts. **Reset** restores that session's automatic tone. Explicit previews play even when completion alerts are muted.
 
 Approval requests and input requests stay silent. Refreshes don't replay a sound; starting the app doesn't chime for an existing backlog. Genuine replies arriving during the initial scan still chime. Simultaneous completions queue their tones.
 

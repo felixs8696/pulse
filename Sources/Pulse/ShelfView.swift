@@ -415,21 +415,24 @@ private struct SessionRow: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .contentShape(Rectangle())
                 }.buttonStyle(.plain)
-                HStack(spacing: 2) {
-                    if session.state.needsAttention {
-                        ShelfIconButton(symbol: store.isRead(session) ? "envelope.open" : "envelope",
-                                        label: store.isRead(session) ? "Mark unread" : "Mark read",
-                                        subdued: store.isRead(session)) { store.toggleRead(session) }
-                    } else {
-                        Color.clear.frame(width: 26, height: 26)
-                    }
-                    ShelfIconButton(symbol: store.pins.contains(session.id) ? "pin.fill" : "pin",
-                                    label: store.pins.contains(session.id) ? "Unpin session" : "Pin session",
-                                    selected: store.pins.contains(session.id),
-                                    subdued: !store.pins.contains(session.id)) { store.togglePin(session) }
+                Button {
+                    store.activeSessionActionsID = store.activeSessionActionsID == session.id ? nil : session.id
+                } label: {
+                    Image(systemName: "ellipsis")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundStyle(Ink.muted)
+                        .frame(width: 26, height: 26)
+                        .contentShape(Rectangle())
                 }
-                // Align the visible pin with the timestamp; its larger hit area
-                // extends into the row padding rather than insetting the glyph.
+                .buttonStyle(.plain)
+                .help("Session options")
+                .accessibilityLabel("Options for \(session.title)")
+                .popover(isPresented: Binding(
+                    get: { store.activeSessionActionsID == session.id },
+                    set: { if !$0 && store.activeSessionActionsID == session.id { store.activeSessionActionsID = nil } }
+                ), arrowEdge: .bottom) {
+                    SessionActions(session: session, store: store)
+                }
                 .padding(.trailing, -7)
             }.padding(.leading, 41)
         }
@@ -438,10 +441,14 @@ private struct SessionRow: View {
         .compositingGroup()
         .transaction { $0.animation = nil }
         .onHover { hover = $0 }
+        .onDisappear {
+            if store.activeSessionActionsID == session.id { store.activeSessionActionsID = nil }
+        }
         .help("\(session.hostLabel) · \(session.project)\n\(session.lastUserMessage ?? "")\n\(session.detail)\n\(session.updatedAt.formatted(date: .abbreviated, time: .standard))")
         .contextMenu {
             Button("Open session") { store.open(session) }
             Button("Preview session sound") { store.previewSound(session) }
+            Button("Change tone…") { store.activeSessionActionsID = session.id }
             Button(store.pins.contains(session.id) ? "Unpin" : "Pin") { store.togglePin(session) }
             if session.state.needsAttention {
                 Button(store.isRead(session) ? "Mark unread" : "Mark read") { store.toggleRead(session) }
@@ -457,6 +464,75 @@ private struct SessionRow: View {
         if seconds < 86400 { return "\(seconds / 3600)h" }
         if seconds < 86400 * 7 { return "\(seconds / 86400)d" }
         return date.formatted(.dateTime.month(.abbreviated).day())
+    }
+}
+
+private struct SessionActions: View {
+    let session: Session
+    @ObservedObject var store: SessionStore
+    private func action(_ title: String, symbol: String, perform: @escaping () -> Void) -> some View {
+        Button {
+            perform()
+            store.activeSessionActionsID = nil
+        } label: {
+            HStack(spacing: 10) {
+                Image(systemName: symbol).frame(width: 16)
+                Text(title)
+                Spacer(minLength: 0)
+            }
+            .font(.system(size: 12))
+            .foregroundStyle(Ink.text)
+            .padding(.horizontal, 8).padding(.vertical, 7)
+            .contentShape(Rectangle())
+        }.buttonStyle(.plain)
+    }
+    var body: some View {
+        VStack(alignment: .leading, spacing: 3) {
+            action(store.pins.contains(session.id) ? "Unpin session" : "Pin session",
+                   symbol: store.pins.contains(session.id) ? "pin.slash" : "pin") { store.togglePin(session) }
+            if session.state.needsAttention {
+                action(store.isRead(session) ? "Mark unread" : "Mark read",
+                       symbol: store.isRead(session) ? "envelope" : "envelope.open") { store.toggleRead(session) }
+            }
+            Divider().padding(.vertical, 7)
+            VStack(alignment: .leading, spacing: 10) {
+                HStack {
+                    Text("Completion tone").font(.system(size: 12, weight: .medium))
+                    Spacer()
+                    Text("\(store.tone(for: session))").monospacedDigit()
+                        .font(.system(size: 12)).foregroundStyle(Ink.accent)
+                }
+                Slider(value: Binding(
+                    get: { Double(store.tone(for: session)) },
+                    set: { store.setTone(Int($0), for: session) }
+                ), in: 1...100, step: 1, onEditingChanged: { editing in
+                    if !editing { store.previewSound(session) }
+                }) { Text("Completion tone") }
+                .labelsHidden()
+                .tint(Ink.accent)
+                .accessibilityValue("\(store.tone(for: session)) out of 100")
+                HStack {
+                    Text("1 · Low")
+                    Spacer()
+                    Text("High · 100")
+                }.font(.system(size: 10)).foregroundStyle(Ink.muted)
+                HStack {
+                    Button { store.previewSound(session) } label: {
+                        Label("Preview", systemImage: "play.fill")
+                    }
+                    Spacer()
+                    Button("Reset") {
+                        store.setTone(nil, for: session)
+                        store.previewSound(session)
+                    }.disabled(!store.hasCustomTone(session))
+                }.font(.system(size: 11)).buttonStyle(.borderless)
+                Text(store.hasCustomTone(session) ? "Saved for this session" : "Automatic session tone")
+                    .font(.system(size: 10)).foregroundStyle(Ink.muted)
+            }.padding(.horizontal, 8).padding(.bottom, 5)
+        }
+        .padding(10).frame(width: 248)
+        .foregroundStyle(Ink.text)
+        .preferredColorScheme(.dark)
     }
 }
 

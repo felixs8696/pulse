@@ -3,6 +3,37 @@ import Testing
 @testable import PulseCore
 
 struct SessionChimeTests {
+    @Test func customTonesRiseAcrossTheWholeScaleAndPreserveAutomaticPitches() {
+        let id = "claude:custom"
+        let frequencies = (1...100).map { SessionChime.frequency(for: id, tone: $0) }
+        #expect(zip(frequencies, frequencies.dropFirst()).allSatisfy { $0 < $1 })
+        #expect(abs(frequencies[0] - 261.625565) < 0.001)
+        #expect(abs(frequencies[99] - 987.766603) < 0.001)
+        #expect(SessionChime.frequency(for: id, tone: -5) == frequencies[0])
+        #expect(SessionChime.frequency(for: id, tone: 150) == frequencies[99])
+        #expect(SessionChime.frequency(for: id) == 440 * pow(2, Double(SessionChime.note(for: id) - 69) / 12))
+        #expect(SessionChime.waveData(for: id, tone: 20) == SessionChime.waveData(for: "codex:other", tone: 20))
+        #expect(SessionChime.waveData(for: id, tone: 1) != SessionChime.waveData(for: id, tone: 100))
+    }
+    @Test func sessionChoicesPersistIndependentlyAndResetToAutomatic() throws {
+        var tones = SessionTones()
+        #expect(tones.overrides.isEmpty)
+        tones.set(19, for: "codex:one")
+        tones.set(88, for: "claude:one")
+        let data = try JSONEncoder().encode(tones)
+        var restored = try JSONDecoder().decode(SessionTones.self, from: data)
+        #expect(restored.value(for: "codex:one") == 19)
+        #expect(restored.value(for: "claude:one") == 88)
+        #expect(restored.value(for: "cursor:one") == SessionChime.tone(for: "cursor:one"))
+        restored.set(nil, for: "codex:one")
+        #expect(restored.overrides["codex:one"] == nil)
+        #expect(restored.value(for: "codex:one") == SessionChime.tone(for: "codex:one"))
+        #expect(restored.value(for: "claude:one") == 88)
+        restored.set(0, for: "cursor:low")
+        restored.set(101, for: "cursor:high")
+        #expect(restored.value(for: "cursor:low") == 1)
+        #expect(restored.value(for: "cursor:high") == 100)
+    }
     @Test func mappingIsStableAndUsesTheCompleteProviderQualifiedID() {
         // Fixed fixtures catch accidental changes to the mapping between app versions.
         #expect(SessionChime.note(for: "codex:one") == 70)

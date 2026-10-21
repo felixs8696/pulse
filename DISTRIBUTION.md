@@ -22,7 +22,7 @@ The app discovers sessions belonging to the person running it. This download con
 
 - Hover the pill to expand, drag it to move, or press **Control–Space** to toggle. If another app or macOS already uses that shortcut, it may conflict.
 - Pin sessions to keep them in **Pinned**. **Working** shows running agents; **Waiting** shows today's unread replies and requests for input. Older activity goes in **Older**.
-- Use the envelope button to mark a reply read. Find it in Today or Pinned to mark it unread again. Read state is saved only in Pulse.
+- Use a row's three-dot menu to pin it or mark a reply read. Find it in Today or Pinned to mark it unread again. The same menu sets its completion tone from 1 (low) to 100 (high), with a preview and reset. Choices are saved only in Pulse.
 - A soft two-tap chime plays when a reply is ready; its pitch varies by session. Sound and launch-at-login controls are in the menu bar.
 
 Pulse relies on local data formats in Codex, Cursor, and Claude; future versions of those apps may need compatibility fixes. It tracks top-level locally indexed sessions, not every remote/cloud conversation. No auto-update service is included; replace the app with a newer ZIP to update.

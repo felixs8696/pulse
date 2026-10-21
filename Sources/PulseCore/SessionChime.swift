@@ -8,16 +8,21 @@ public enum SessionChime {
         // Two octaves, C4–B5: distinct pitches without very low or piercing tones.
         return 60 + Int(hash % 24)
     }
-    public static func frequency(for sessionID: String) -> Double {
-        440 * pow(2, Double(note(for: sessionID) - 69) / 12)
+    public static func tone(for sessionID: String) -> Int {
+        Int((Double(note(for: sessionID) - 60) / 23 * 99).rounded()) + 1
+    }
+    public static func frequency(for sessionID: String, tone: Int? = nil) -> Double {
+        let pitch = tone.map { 60 + Double(min(100, max(1, $0)) - 1) / 99 * 23 }
+            ?? Double(note(for: sessionID))
+        return 440 * pow(2, (pitch - 69) / 12)
     }
     public static let sampleRate = 44_100
     public static let duration = 0.62
 
     /// Two rounded wooden taps, a major third apart, with a short shared tail.
     /// Harmonic overtones keep the sound warm even for higher session pitches.
-    public static func waveData(for sessionID: String) -> Data {
-        let frequency = frequency(for: sessionID)
+    public static func waveData(for sessionID: String, tone: Int? = nil) -> Data {
+        let frequency = frequency(for: sessionID, tone: tone)
         let count = Int(Double(sampleRate) * duration)
         var data = Data()
         func ascii(_ value: String) { data.append(contentsOf: value.utf8) }

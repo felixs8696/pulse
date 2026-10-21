@@ -17,6 +17,8 @@ final class SessionStore: ObservableObject {
     var expanded: Bool { presentation.expanded }
     var heldOpen: Bool { presentation.heldOpen }
     @Published var showConnections = false
+    @Published var activeSessionActionsID: String?
+    @Published private var sessionTones: SessionTones
     @Published var soundsEnabled: Bool { didSet {
         defaults.set(soundsEnabled, forKey: "attentionSoundsEnabled")
         if !soundsEnabled { chimes.stop() }
@@ -35,6 +37,8 @@ final class SessionStore: ObservableObject {
     init() {
         soundsEnabled = UserDefaults.standard.object(forKey: "attentionSoundsEnabled") as? Bool ?? true
         pins = Set(UserDefaults.standard.stringArray(forKey: "pins") ?? [])
+        sessionTones = UserDefaults.standard.data(forKey: "sessionTonesV1")
+            .flatMap { try? JSONDecoder().decode(SessionTones.self, from: $0) } ?? SessionTones()
         // Old “seen” entries included automatic click acknowledgments; they cannot establish handling.
         reviewInbox = UserDefaults.standard.data(forKey: "reviewInboxV2")
             .flatMap { try? JSONDecoder().decode(ReviewInbox.self, from: $0) } ?? ReviewInbox()
@@ -60,7 +64,7 @@ final class SessionStore: ObservableObject {
                 let newAttention = self.attentionTracker.update(live, availableProviders: Set(result.sources.filter(\.available).map(\.provider)))
                 let todayIDs = Set(next.filter { SessionScope.isToday($0) }.map(\.id))
                 if self.soundsEnabled {
-                    self.chimes.play(newAttention.filter { todayIDs.contains($0) })
+                    self.chimes.play(newAttention.filter { todayIDs.contains($0) }, tones: self.sessionTones.overrides)
                 }
                 if self.sessions != next { self.sessions = next }
                 if self.sources != result.sources { self.sources = result.sources }
@@ -103,7 +107,15 @@ final class SessionStore: ObservableObject {
         soundsEnabled.toggle()
         if soundsEnabled { chimes.play(["pulse:sound-preview"]) }
     }
-    func previewSound(_ session: Session) { chimes.play([session.id]) }
+    func previewSound(_ session: Session) {
+        chimes.preview(session.id, tone: sessionTones.overrides[session.id])
+    }
+    func tone(for session: Session) -> Int { sessionTones.value(for: session.id) }
+    func hasCustomTone(_ session: Session) -> Bool { sessionTones.overrides[session.id] != nil }
+    func setTone(_ value: Int?, for session: Session) {
+        sessionTones.set(value, for: session.id)
+        if let data = try? JSONEncoder().encode(sessionTones) { defaults.set(data, forKey: "sessionTonesV1") }
+    }
     func togglePin(_ s: Session) {
         if pins.contains(s.id) { pins.remove(s.id) } else { pins.insert(s.id) }
         defaults.set(Array(pins), forKey: "pins")
