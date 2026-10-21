@@ -1,0 +1,23 @@
+{
+  "name": "pulse-router",
+  "displayName": "Pulse \u00b7 Session router",
+  "description": "Returns to exact Claude tabs, terminal panes, and agent chats in their Cursor workspace.",
+  "version": "1.1.1",
+  "publisher": "local",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "main": "./extension.js",
+  "activationEvents": [
+    "onUri",
+    "onStartupFinished"
+  ],
+  "extensionKind": [
+    "ui"
+  ],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": true
+    }
+  }
+}
