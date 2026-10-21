@@ -226,11 +226,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
     private func presentReplyBanners(_ sessions: [Session], preview: Bool = false) {
         if store.replyBannerDuration == .untilClicked { hoverTask?.cancel() }
-        // Use the display under the pointer, without moving the pinned session shelf.
-        let target = NSScreen.screens.first { $0.frame.contains(NSEvent.mouseLocation) }
-        let pill = target.flatMap { displayPills[displayID($0)] } ?? panel!
-        guard let screen = pill.screen ?? target ?? NSScreen.main else { return }
-        replyBanners.enqueue(sessions, pill: pill, screen: screen.visibleFrame, duration: store.replyBannerDuration, preview: preview) { [weak self] session in
+        let placements = NSScreen.screens.map { screen in
+            let id = displayID(screen)
+            let pill = displayPills[id]?.frame ?? ShelfPlacement(
+                anchor: displayPositions.anchor(displayID: id, screen: screen.visibleFrame),
+                screen: screen.visibleFrame).pillFrame
+            return ReplyBannerPlacement(pill: pill, screen: screen.visibleFrame)
+        }
+        replyBanners.enqueue(sessions, placements: placements, duration: store.replyBannerDuration, preview: preview) { [weak self] session in
             guard let self else { return }
             if session.nativeID == "banner-preview" { self.store.presentation.holdOpen() }
             else { self.store.open(session) }

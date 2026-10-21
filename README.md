@@ -39,7 +39,7 @@ Hover over the pill to open your session list. Each row shows your last message.
 - Claude Code, Codex, and Cursor sessions in one list, with counts for agents working and waiting for you.
 - One moving pulse around the pill's border per working agent. Three pulses means three active agents. As agents finish, their pulses fade away.
 - A two-tap chime when a reply is ready. Each session keeps its own tone. Set its pitch from 1 (low) to 100 (high), or keep the automatic tone.
-- Optional reply banners slide out beside the pill. Choose 5–60 seconds or keep them open until clicked. Hover to keep one open, or click to return to the session. Enable **Show reply banners** in the top-right menu.
+- Optional reply banners slide out beside the pill. Choose 5–60 seconds or keep them open until clicked. Banners appear on every display, with shared dismissal. Hover to keep one open, or click to return to the session. Enable **Show reply banners** in the top-right menu.
 - A floating pill that stays visible across Spaces, and appears on every connected display by default.
 
 <table>
