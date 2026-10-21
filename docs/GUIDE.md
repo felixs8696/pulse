@@ -1,0 +1,128 @@
+# Pulse guide
+
+[← Back to Pulse](../README.md) · [Install and connect your apps](../DISTRIBUTION.md)
+
+## The pill and panel
+
+Hover the pill for a preview. Move away to collapse it, or click the pill once to keep the panel open. Click again or press Escape to collapse. **Control–Space** shows or hides it.
+
+The pill stays above your windows and across Spaces. Lavender counts show working agents; white counts show sessions waiting for you today. Each working agent has a subtle trace around the pill's border. Working logos in the expanded panel dim together. Both effects respect macOS Reduce Motion.
+
+Drag the pill, the panel's title area, or its empty background to move both surfaces together. Their position persists. The panel opens on whichever side has room, keeping a constant gap from the pill. Use the menu-bar menu to reset its position.
+
+Pulse is a menu-bar app and doesn't appear in the Dock. The menu also includes launch at login, connections, sound, and Quit.
+
+## Finding a conversation
+
+| Tab | What belongs here |
+| :--- | :--- |
+| **Pinned** | Conversations you've saved, across all dates. |
+| **Working** | Agents currently running a turn. Ordered by your most recent message, so tool activity doesn't shuffle the list. |
+| **Waiting** | Today's outstanding replies and requests for input. |
+| **Today** | Today's activity and agents still running. |
+| **Older** | Inactive conversations from previous days. |
+
+Search matches titles, projects, and your latest message. The app filter narrows results, including tab counts. Other than Working, lists sort by actual activity time. Hover a row for its exact date and the evidence behind its status.
+
+The subtext shows your latest user message, excluding tool responses, attachments, and generated context. If readable text isn't available, the row says so. Status badges appear in tabs that mix states; Working and Waiting already describe their contents.
+
+## Returning to a session
+
+Click a row to reopen the original conversation. Pulse uses Codex deep links, a small Cursor router, and captured iTerm pane IDs. It doesn't start a new agent turn.
+
+Claude rows identify their host separately from the agent: **Cursor · Claude**, **Cursor · Terminal**, or **iTerm · Claude**. Unknown or unusable destinations are hidden. Closed iTerm panes leave the list, counts, pins, and sounds rather than offering to create a new terminal. A failed pane inventory check preserves the last known inventory.
+
+The first iTerm check may trigger a macOS Automation prompt. Permission enables live pane detection and selection through Apple Events; screen recording isn't used.
+
+Cursor's router selects the matching workspace and exact chat, Claude tab, or recorded terminal process. If the workspace is closed, it can open a window for it. Multiple windows with the same workspace may each reveal the conversation.
+
+## Read, unread, and Waiting
+
+Opening a session **doesn't** mark it read. Use the envelope button or right-click menu to **Mark read** or **Mark unread**. **Mark all read** applies only to the displayed list.
+
+Read state is stored locally for that specific reply. A later response can return to Waiting. Marking unread doesn't play a sound. It also doesn't bypass the daily expiry: at local midnight, previous days' replies move to Older without being deleted or marked handled. Pinning keeps a conversation accessible but doesn't keep its old replies in Waiting.
+
+Source-app unread status is separate from Pulse's explicit read state. Child agents, background subtasks, and internal reviews never enter the list, counts, or sounds, even if previously pinned.
+
+## Completion sounds
+
+A soft two-tap chime plays when a tracked reply becomes ready. A stable hash of the session ID selects its pitch from 24 notes, so a session keeps its tone across restarts. Different sessions can share a note. Right-click a row and choose **Preview session sound** to hear it.
+
+Approval requests and input requests stay silent. Refreshes don't replay a sound; starting the app doesn't chime for an existing backlog. Genuine replies arriving during the initial scan still chime. Simultaneous completions queue their tones.
+
+Mute from the panel's top-right speaker or **Play sound when a reply is ready** in the menu-bar menu. Both controls share a saved setting. Unmuting plays a short confirmation chime.
+
+## Setting up from source
+
+For Codex Desktop, no additional setup is required.
+
+For Cursor, install the local session router:
+
+```sh
+python3 scripts/setup-cursor.py
+```
+
+It activates on its first link and can install while agents remain running. Claude tabs also require the Claude Code extension. Uninstall **Pulse · Session router** from Cursor's Extensions panel to remove it.
+
+For precise Claude Code states and pane IDs in new sessions:
+
+```sh
+python3 scripts/setup-claude.py
+```
+
+The installer backs up `~/.claude/settings.json`, preserves existing settings and hooks, and merges only Pulse's commands. It is safe to run again. Restart Claude Code sessions after installing. To remove Pulse's hooks:
+
+```sh
+python3 scripts/setup-claude.py --remove
+```
+
+Existing `~/.claude/agent-manager/sessions` reports are detected automatically.
+
+## Tracking and limits
+
+| Agent | Local source | Navigation |
+| :--- | :--- | :--- |
+| Claude Code | `~/.claude/projects/**/*.jsonl`, optional hooks and status reports | Original Cursor tab or terminal, or live iTerm pane. |
+| Codex Desktop | Newest `~/.codex/state_*.sqlite` index and rollout logs | `codex://threads/<id>` |
+| Cursor agents | Cursor's local `state.vscdb` and composer metadata | `cursor://local.pulse-router/open` to the matching workspace and composer. |
+
+Only top-level, unarchived, locally indexed conversations with usable destinations appear. This isn't an account-wide cloud monitor. Claude chat, Cowork, and ChatGPT chat aren't integrated. Codex CLI conversations can appear if locally indexed, but navigation returns to Desktop rather than the CLI pane.
+
+Claude hooks provide precise approval states. Codex and Cursor use lifecycle events and stored metadata. If an app doesn't record an approval locally, Pulse can't reliably detect it. Missing evidence becomes **Status unavailable**; a stale turn stops being **Working** after six hours. **Reply ready** means a turn completed, not that the project is finished.
+
+Restored Codex history keeps its original timestamps and stays out of Waiting and completion sounds until a genuine live turn runs. Generated notifications don't replace your query. Connections & setup reports missing or unreadable sources. Source-app format changes may require compatibility fixes.
+
+The scanner polls every three seconds, discovers new Claude transcript files every fifteen seconds, and caches bounded transcript reads. Databases are read-only with WAL visibility. Authentication files aren't read. Conversations aren't uploaded or copied into a second transcript store.
+
+## Builds and diagnostics
+
+Run checks:
+
+```sh
+bash scripts/test.sh
+```
+
+Create a universal Apple Silicon/Intel ZIP and SHA-256 checksum:
+
+```sh
+bash scripts/export.sh
+```
+
+Only explicitly listed build artifacts are packaged. Sessions and local preferences are excluded. The app is ad-hoc signed, not notarized; no auto-update service is included. See the [distribution guide](../DISTRIBUTION.md).
+
+Inspect discovery locally without opening the UI:
+
+```sh
+swift build --disable-sandbox
+.build/debug/Pulse --diagnose
+```
+
+Diagnostic output includes your session titles and project paths. Keep it local.
+
+## Documentation screenshots
+
+```sh
+bash scripts/screenshots/render.sh
+```
+
+The renderer builds a temporary entry point against Pulse's real SwiftUI views, fills them with fictional sessions, and saves 2× PNGs to `docs/images`. It doesn't start the scanner, install hooks, open sessions, or play sounds. The production app isn't modified.

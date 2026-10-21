@@ -1,12 +1,87 @@
-# Pulse
+<p align="center">
+  <img src="Sources/Pulse/Resources/Logos/pulse-mark.svg" width="64" height="48" alt="Pulse waveform">
+</p>
 
-A local macOS companion for Claude Code in iTerm or Cursor, Codex Desktop, and Cursor agents. A small vertical floating pill stays above your windows, including across Spaces. Hover for your recent sessions; pin the ones you want to keep nearby. No server, API keys, analytics, or third-party packages.
+<h1 align="center">Pulse</h1>
 
-Download the Mac app from [Releases](https://github.com/felixs8696/pulse/releases), or build it locally below.
+<p align="center"><strong>Keep every agent conversation within reach.</strong></p>
 
-## Run
+<p align="center">
+  A small, persistent Mac companion for Claude Code, Codex, and Cursor.<br>
+  See who's working, find the replies waiting for you, and jump back into the right session.
+</p>
 
-Requires macOS 14+ and Apple’s Command Line Tools (`xcode-select --install`).
+<p align="center">
+  <a href="https://github.com/felixs8696/pulse/releases/latest"><strong>Download for Mac →</strong></a>
+  &nbsp; · &nbsp;
+  <a href="#get-started">Get started</a>
+  &nbsp; · &nbsp;
+  <a href="docs/GUIDE.md">User guide</a>
+</p>
+
+<p align="center"><sub>macOS 14+ &nbsp; / &nbsp; Apple Silicon + Intel &nbsp; / &nbsp; Runs locally</sub></p>
+
+<p align="center">
+  <img src="docs/images/overview.png" width="664" alt="Pulse's floating pill alongside its expanded panel, showing four example Claude Code, Codex, and Cursor sessions. Two agents are working and two replies are waiting.">
+</p>
+
+<p align="center"><sub>Actual Pulse UI with fictional sessions. Your conversations stay on your Mac.</sub></p>
+
+## Small pill. All your threads.
+
+Pulse stays above your windows and across Spaces. Hover to take a quick look; click to keep the panel open. When an agent finishes, a soft two-tap chime lets you know.
+
+- **Know what's moving.** Working counts and subtle border traces show active agents.
+- **Pick up where you left off.** Each row shows your last message. Click it to reopen the original app and conversation.
+- **Keep favorites close.** Pin a thread, search by message or project, and leave older conversations in their own tab.
+- **Clear your own inbox.** Mark replies read or unread explicitly. Opening a conversation doesn't dismiss it.
+
+<table>
+  <tr>
+    <td width="50%" valign="top">
+      <img src="docs/images/waiting.png" alt="Waiting tab with two completed example replies and explicit mark-read controls.">
+      <strong>Ready when you are.</strong><br>
+      Today's outstanding replies live in Waiting. Mark them read when you're done; previous days move to Older.
+    </td>
+    <td width="50%" valign="top">
+      <img src="docs/images/pinned.png" alt="Pinned tab keeping two example conversations close, with their current status visible.">
+      <strong>A place for your ongoing threads.</strong><br>
+      Pins stay across days. Keep the conversations you return to without mixing them into your working queue.
+    </td>
+  </tr>
+</table>
+
+## Get started
+
+1. **[Download the latest ZIP](https://github.com/felixs8696/pulse/releases/latest)** and unzip it.
+2. Drag **Pulse.app** into **Applications** and open it.
+3. Hover the pill to see your sessions. Press **⌃ Space** to show or hide the panel.
+
+Pulse lives in the menu bar, so it doesn't add a Dock icon. Drag either the pill or the panel's title area to move them together. The menu-bar menu has launch-at-login and sound controls.
+
+> The app is ad-hoc signed and isn't Apple-notarized yet. If macOS blocks it, use **System Settings → Privacy & Security → Open Anyway** after attempting to open a copy you trust. See the [installation guide](DISTRIBUTION.md).
+
+### Connect your agents
+
+| Agent | Supported app or surface | Setup |
+| :--- | :--- | :--- |
+| **Claude Code** | iTerm, Cursor's Claude extension, Cursor terminal | Install the included Claude hooks. For Cursor, install the included session router too. |
+| **Codex** | Codex Desktop | Discovers locally indexed chats automatically. |
+| **Cursor agents** | Cursor | Install the included `pulse-router.vsix`. |
+
+The ZIP includes installers and instructions. The [setup guide](DISTRIBUTION.md#connect-your-apps) walks through each connection.
+
+Only top-level conversations you interact with appear. Child agents and background subtasks stay out of the list and counts. Claude chat, Cowork, and ChatGPT chat aren't integrated. Codex navigation returns to Desktop; there isn't a dedicated Codex CLI destination.
+
+## Local by design
+
+No account, API keys, server, analytics, or telemetry. Pulse reads local session files and databases; it doesn't upload your conversations. Pins, read state, and preferences stay on your Mac. Downloads contain no session history or personal settings.
+
+Pulse relies on each app's local formats and navigation links, which may change. Remote sessions appear only when indexed locally. See [tracking details and limitations](docs/GUIDE.md#tracking-and-limits).
+
+## Build it yourself
+
+Requires macOS 14+ and Apple's Command Line Tools (`xcode-select --install`). No third-party dependency downloads.
 
 ```sh
 git clone https://github.com/felixs8696/pulse.git
@@ -14,84 +89,10 @@ cd pulse
 bash scripts/build.sh --run
 ```
 
-The runnable app is `build/Pulse.app`. You can keep it there or move it to Applications. It is signed locally for this Mac, not notarized for distribution.
+| Task | Command |
+| :--- | :--- |
+| Run checks | `bash scripts/test.sh` |
+| Export a universal Mac app ZIP | `bash scripts/export.sh` |
+| Regenerate the sample screenshots | `bash scripts/screenshots/render.sh` |
 
-* Hover the pill to expand it; moving away collapses it after a short delay. The pill stays at a fixed position while the separate shelf fades and slides into view. The shelf opens alongside it, switching sides when needed, with a constant 10-point gap between the visible edges. Lavender and white counts show working agents and sessions waiting for you.
-* Click the pill to keep the shelf open, including after a hover preview; it stays open when you move away. Click again to release and collapse it. Hover previews resume after you leave and return to the pill. Search focus does not silently toggle the hold. Escape also collapses it. Clicks and drags have separate handling.
-* Drag the pill, the expanded panel’s title area, or its empty background to place it anywhere. Search, tabs, session rows, and their controls keep their normal interactions. During a drag the pill and shelf share one native window, so they move together instead of one window chasing the other. Placement and position saving happen when you release. Its position persists; use the menu-bar menu to reset it.
-* Each working session has a soft lavender comet traveling around the pill's border, with a stable phase and tempo. When it stops working, its trace eases to rest and fades away. The border stays quiet at idle; macOS Reduce Motion replaces the movement with static ticks.
-* In the expanded panel, working sessions' logos dim and brighten together on a shared 2.6-second cycle. Other logos stay still. This effect stops while the panel is collapsed and respects Reduce Motion.
-* Activity updates gently move each complete row into its new position over 0.36 seconds, without bounce. Icons, text, and controls travel together. Departing rows first fade out in place for 0.2 seconds, then the list closes the empty space; additions fade in. Reduce Motion makes these changes instant.
-* **Control–Space** toggles the shelf without needing Accessibility permissions.
-* Use **Pinned**, **Working**, **Waiting**, **Today**, and **Older**, search by title/project, or filter by app. Pinned keeps saved sessions across all dates. Today includes today’s activity plus actively running sessions; Older holds inactive sessions from previous days.
-* Pin sessions with the pin beside a row. Working sorts by when you last sent each agent a message, newest first; tool activity and status updates never move a working row. Sessions without a known message timestamp stay at the bottom in a stable order. Other sections sort by actual activity, newest first. Hover a row for the exact date and status evidence.
-* The subtext beneath a session title shows your latest user message, excluding tool responses and generated context. Search also matches this message. If the source does not retain readable message text, the row says so.
-* Clicking a session opens its app and conversation. Opening a session does not clear it from Waiting. A finished reply stays there for the current local calendar day, unless a new user turn starts or you choose **Mark read**. At midnight it moves to Older without being deleted or marked handled. Use the envelope button or right-click menu to explicitly **Mark read** or **Mark unread**. Read replies leave Waiting and lower the pill count; find them in Today or Pinned to mark unread again. **Mark all read** affects only the displayed list. Read/unread state is saved locally across restarts, applies to that specific reply, and never changes just by opening a session. Marking unread does not play a sound or override the daily expiry.
-* A soft two-tap chime plays only when a tracked agent's reply is ready. Its base pitch is deterministically hashed from the session ID into 24 notes (C4–B5), so the same session keeps its pitch across restarts. Right-click a session and choose **Preview session sound** to learn it. Different sessions can share a note. Input and approval requests stay silent. Repeated refreshes stay silent, and starting the app does not replay existing replies; genuinely new replies arriving during the initial scan still chime. Replies arriving together play their session tones in sequence. Use the speaker button in the panel’s top-right corner to mute or unmute. It stays synchronized with **Play sound when a reply is ready** in the menu-bar menu, and the setting survives restarts. Unmuting plays a short confirmation chime.
-* The menu-bar menu includes launch at login, setup, reset position, and Quit.
-
-## Cursor setup
-
-Install the tiny local bridge once so local Cursor conversations open in their workspace:
-
-```sh
-python3 scripts/setup-cursor.py
-```
-
-The navigation extension activates on its first link. It selects the exact Claude tab, Cursor agent chat, or recorded terminal process in the matching workspace (including multi-folder workspaces). Claude tabs are opened through the installed Claude extension’s session-opening command without submitting a prompt. The navigation extension can install while agents remain running and handles Cursor agent chats, Claude tabs, and terminal panes. It contains no network client and never starts a new agent turn. You can uninstall **Pulse · Session router** from Cursor’s Extensions panel.
-
-## Claude Code setup
-
-Existing `~/.claude/agent-manager/sessions` reports are detected automatically. To capture precise approval states and terminal pane IDs for **new sessions**, install Pulse’s own hooks:
-
-```sh
-python3 scripts/setup-claude.py
-```
-
-The installer backs up `~/.claude/settings.json`, preserves other settings and hooks, and merges only Pulse’s commands. It is safe to run again. Restart Claude Code sessions after installing. To remove these hooks:
-
-```sh
-python3 scripts/setup-claude.py --remove
-```
-
-Rows show the host separately from the agent: **Cursor · Claude**, **Cursor · Terminal**, or **iTerm · Claude**. Cursor’s saved tab-to-workspace mapping and explicit process host reports take precedence over inherited iTerm environment variables. Claude sessions with an unknown host or missing navigation target are hidden from every tab, pins, counts, and sounds. They can reappear when a later status report identifies a usable destination.
-
-The first time Pulse checks iTerm panes, macOS may ask to let Pulse control iTerm. Allow it for live pane detection and exact pane selection. This uses Apple Events, not screen recording. Sessions whose captured iTerm pane is no longer open are hidden from every tab, pins, counts, and sounds. A failed inventory check preserves the last known inventory. Closed panes never trigger a resume prompt or create a new terminal.
-
-## What is tracked
-
-| Source | Local data | Return to session |
-| --- | --- | --- |
-| Claude Code | `~/.claude/projects/**/*.jsonl`, optional status reports and hooks | Select the original Cursor workspace and Claude tab, Cursor terminal process, or iTerm window/tab/split; hide closed iTerm panes without offering resume |
-| Codex Desktop | Newest `~/.codex/state_*.sqlite` thread index plus its rollout logs | `codex://threads/<id>` |
-| Cursor | `~/Library/Application Support/Cursor/User/globalStorage/state.vscdb`, composer headers and metadata | Local `cursor://local.pulse-router/open` URI → matching workspace → exact composer |
-
-All unarchived indexed Codex/Cursor sessions and local Claude transcripts are scanned. Only top-level conversations you interact with are included. Child agents, background subtasks, and internal reviews are excluded from the list, counts, and sounds, even if running, waiting, or previously pinned. Waiting includes outstanding finished replies and requests for input dated today in your Mac’s local time zone. Previous days move to Older at local midnight, without deleting or acknowledging them. Pins do not exempt old replies from expiry; pinned sessions remain accessible in Pinned, and actively running sessions remain in Working regardless of age. Explicit handling applies only to that reply; later completions return to the inbox. Existing automatic click acknowledgments from older builds are ignored. The pill shows today’s total across top-level sessions; the Waiting tab shows the count matching the current search and app filter, with a one-click option to show the full inbox. Pins and acknowledgments are local to Pulse and do not change the source apps.
-
-The scanner polls every three seconds on a background queue and discovers new Claude transcript files every fifteen seconds. Transcript reads are bounded and cached by file size and modification time. Databases are opened strictly read-only and retain WAL visibility. Authentication files are not read, and nothing is sent to a server. Source messages are not copied into a second transcript store.
-
-## Limits
-
-These applications do not share a public universal session API. Pulse uses the installed versions’ local formats and deep links; an app update can require adapting a reader. Connections & setup reports missing/unreadable sources. Remote/cloud sessions only appear if the desktop app has indexed them locally. This is not an account-wide cloud monitor.
-
-Claude approvals are precise with hooks or existing agent-manager reports. Codex and Cursor states are based on lifecycle events and stored metadata. Approvals that the app does not write locally cannot be reliably detected; Pulse uses “Status unavailable” when evidence is missing and stops calling stale turns “Working” after six hours. “Reply ready” means a completed turn, not guaranteed project completion. Restored Codex history uses original turn times and stays out of Waiting and reply sounds until a genuine new turn runs. Generated task notifications do not replace your query. Source-app unread status is not synchronized with Pulse’s local acknowledgments.
-
-Codex deep links target the installed `codex` scheme (on this Mac that is the ChatGPT/Codex app). The Cursor bridge opens the matching workspace window and conversation; if that workspace is closed, it opens a new window. Multiple windows with the same workspace may each reveal the conversation. iTerm exact pane restoration requires a captured live session ID. Accessibility-based window guessing is intentionally avoided.
-
-## Share a build
-
-Run `bash scripts/export.sh` to create `build/Pulse-macOS.zip` and its SHA-256 checksum. The ZIP includes a universal Apple Silicon/Intel app for macOS 14+, the Cursor extension, optional Claude hook installers, and recipient instructions. Only explicitly listed build artifacts are packaged; your sessions and local preferences are excluded. The app is ad-hoc signed, not notarized, so recipients may need macOS's Open Anyway flow. See [DISTRIBUTION.md](DISTRIBUTION.md).
-
-## Validate
-
-```sh
-bash scripts/test.sh
-```
-
-Inspect current discovery without launching the UI (prints session titles and project paths locally):
-
-```sh
-.build/debug/Pulse --diagnose
-```
-
-The Swift package separates the native app from the session scanner/parser library. There is no dependency download step.
+Build output: `build/Pulse.app`. Shareable download: `build/Pulse-macOS.zip`.
