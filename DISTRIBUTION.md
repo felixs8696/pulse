@@ -14,7 +14,9 @@ The app discovers sessions belonging to the person running it. This download con
 
 **Cursor:** in Cursor's Extensions panel, open the **…** menu → **Install from VSIX…** and choose the included `pulse-router.vsix`. This enables opening the exact chat or Claude tab. The Claude Code extension must also be installed for Claude tabs.
 
-**Claude Code:** in Pulse, click **Connect Claude Code** in the setup card or top-right menu. This installs the included local hooks, backs up Claude’s settings, and preserves existing hooks. Keep your chats open and continue with your next message or tool action. Current Claude Code versions normally reload the settings automatically. If a chat does not appear, use `/hooks` in that chat to inspect the Pulse hooks and review any pending changes. The setup needs Python 3 (Apple’s Command Line Tools provide it).
+**Claude Code:** Pulse automatically connects Claude Code when it detects your local Claude folder. It installs missing hooks, checks them again on launch, and refreshes the installed hook when a new Pulse version ships. Claude settings are backed up and existing hooks are preserved. Keep chats open and continue with your next message or tool action. Current Claude Code versions normally reload the settings automatically. If a chat does not appear, check `/hooks` in that chat. Hooks explicitly disabled in Claude settings are respected, and invalid settings are left unchanged. Turn off **Automatically connect Claude Code** in Pulse’s top-right menu to opt out. **Repair Claude connection** retries setup after a failure.
+
+The connection needs Python 3 from Apple’s Command Line Tools. If it is missing, Pulse shows a setup message rather than launching the tools installer in the background.
 
 For manual setup, run `python3 "/Applications/Pulse.app/Contents/Resources/setup-claude.py"`. Add ` --remove` to remove Pulse’s hooks.
 

@@ -22,6 +22,13 @@ final class SessionStore: ObservableObject {
     @Published private(set) var connectingClaude = false
     @Published private(set) var claudeConnectionError: String?
     @Published private(set) var claudeConnectionHint: String?
+    @Published var automaticClaudeSetup: Bool {
+        didSet {
+            defaults.set(automaticClaudeSetup, forKey: "automaticClaudeSetup")
+            if automaticClaudeSetup { checkedClaudeSetup = false; maintainClaudeConnection() }
+        }
+    }
+    private var checkedClaudeSetup = false
     @Published var activeSessionActionsID: String?
     @Published var pillOnEveryDisplay: Bool { didSet {
         defaults.set(pillOnEveryDisplay, forKey: "pillOnEveryDisplay")
@@ -52,6 +59,7 @@ final class SessionStore: ObservableObject {
     @Published private var closedTerminals: Set<String> = []
 
     init() {
+        automaticClaudeSetup = UserDefaults.standard.object(forKey: "automaticClaudeSetup") as? Bool ?? true
         pillOnEveryDisplay = UserDefaults.standard.object(forKey: "pillOnEveryDisplay") as? Bool ?? true
         replyBannersEnabled = UserDefaults.standard.object(forKey: "replyBannersEnabled") as? Bool ?? true
         replyBannerDuration = (UserDefaults.standard.object(forKey: "replyBannerDuration") as? Int)
@@ -72,6 +80,7 @@ final class SessionStore: ObservableObject {
     }
     func refresh() {
         claudeConnection = ClaudeConnection.inspect()
+        maintainClaudeConnection()
         scanner.refresh(pinnedIDs: pins) { [weak self] event in
             Task { @MainActor [weak self] in self?.receiveScan(event) }
         }
@@ -86,14 +95,33 @@ final class SessionStore: ObservableObject {
         }
     }
     var needsClaudeConnection: Bool {
-        claudeConnection != .installed && sessions.contains { $0.provider == .claude && !$0.hasOpenDestination }
+        let hasUnrouted = sessions.contains { $0.provider == .claude && !$0.hasOpenDestination }
+        let hasRouted = sessions.contains { $0.provider == .claude && $0.hasOpenDestination }
+        return hasUnrouted && (!hasRouted || claudeConnection != .installed || claudeConnectionError != nil)
     }
     func connectClaude() {
+        installClaudeConnection(automatically: false)
+    }
+    private func maintainClaudeConnection() {
+        guard automaticClaudeSetup, !checkedClaudeSetup, !connectingClaude,
+              FileManager.default.fileExists(atPath: FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".claude").path) else { return }
+        checkedClaudeSetup = true
+        guard claudeConnection != .disabled else { return }
+        if claudeConnection == .invalidSettings {
+            claudeConnectionError = "Claude settings could not be read. Pulse left them unchanged. Check ~/.claude/settings.json before repairing the connection."
+            return
+        }
+        guard let hook = Bundle.main.url(forResource: "claude-hook", withExtension: "py"),
+              let data = try? Data(contentsOf: hook) else { return }
+        if ClaudeConnection.needsRepair(bundledHook: data) {
+            installClaudeConnection(automatically: true)
+        }
+    }
+    private func installClaudeConnection(automatically: Bool) {
         guard !connectingClaude, claudeConnection != .disabled else { return }
         connectingClaude = true
         claudeConnectionError = nil
-        presentation.holdOpen()
-        showConnections = true
+        if !automatically { presentation.holdOpen(); showConnections = true }
         Task {
             defer { connectingClaude = false }
             do {

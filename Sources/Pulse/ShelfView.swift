@@ -200,10 +200,9 @@ struct ShelfView: View {
             SoundToggleButton(store: store)
             Menu {
                 Button(store.showConnections ? "Hide connections" : "Connections & setup") { store.showConnections.toggle(); store.presentation.holdOpen() }
-                if store.claudeConnection != .installed {
-                    Button("Connect Claude Code") { store.connectClaude() }
-                        .disabled(store.connectingClaude || store.claudeConnection == .disabled)
-                }
+                Button(store.claudeConnection == .installed ? "Repair Claude connection" : "Connect Claude Code") { store.connectClaude() }
+                    .disabled(store.connectingClaude || store.claudeConnection == .disabled)
+                Toggle("Automatically connect Claude Code", isOn: $store.automaticClaudeSetup)
                 Button("Mark displayed replies read") { store.markDisplayedRead() }
                 Button("Refresh now") { store.refresh() }
                 Divider()
@@ -287,7 +286,7 @@ struct ShelfView: View {
     }
     private var claudeConnectionContent: some View {
         VStack(alignment: .leading, spacing: 8) {
-            if store.claudeConnection == .installed {
+            if store.claudeConnection == .installed && store.claudeConnectionError == nil {
                 Text(store.claudeConnectionHint ?? "Claude hooks installed. Keep using your current chats to connect their live panes.")
                     .font(.system(size: 11)).foregroundStyle(Ink.muted)
             } else if store.claudeConnection == .disabled {

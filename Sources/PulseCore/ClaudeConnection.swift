@@ -3,6 +3,17 @@ import Foundation
 public enum ClaudeConnection: Sendable, Equatable {
     case missing, installed, disabled, invalidSettings
 
+    public static func needsRepair(home: URL = FileManager.default.homeDirectoryForCurrentUser,
+                                   bundledHook: Data, directory: String = "pulse") -> Bool {
+        switch inspect(home: home, directory: directory) {
+        case .missing: return true
+        case .disabled, .invalidSettings: return false
+        case .installed:
+            let installed = try? Data(contentsOf: home.appendingPathComponent(".local/share/\(directory)/claude-hook.py"))
+            return installed != bundledHook
+        }
+    }
+
     public static func inspect(home: URL = FileManager.default.homeDirectoryForCurrentUser,
                                directory: String = "pulse") -> ClaudeConnection {
         let settings = home.appendingPathComponent(".claude/settings.json")
@@ -12,7 +23,7 @@ public enum ClaudeConnection: Sendable, Equatable {
         if root["disableAllHooks"] as? Bool == true { return .disabled }
         guard let hooks = root["hooks"] as? [String: Any],
               FileManager.default.fileExists(atPath: home.appendingPathComponent(".local/share/\(directory)/claude-hook.py").path) else { return .missing }
-        for event in ["UserPromptSubmit", "PreToolUse", "PostToolUse", "Stop", "PermissionRequest"] {
+        for event in ["SessionStart", "UserPromptSubmit", "PreToolUse", "PostToolUse", "PermissionRequest", "Notification", "Stop", "StopFailure", "SessionEnd"] {
             let groups = hooks[event] as? [[String: Any]] ?? []
             let handlers = groups.flatMap { $0["hooks"] as? [[String: Any]] ?? [] }
             guard handlers.contains(where: {

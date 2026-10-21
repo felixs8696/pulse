@@ -10,6 +10,22 @@ enum ClaudeConnectionInstaller {
             throw Failure(errorDescription: "The Claude setup files are missing. Reinstall Pulse from the latest download.")
         }
         try await Task.detached(priority: .userInitiated) {
+            // /usr/bin/python3 can be an installer stub on a fresh Mac. Check the
+            // selected developer tools first so background repair never opens it.
+            let tools = Process()
+            tools.executableURL = URL(fileURLWithPath: "/usr/bin/xcode-select")
+            tools.arguments = ["-p"]
+            let output = Pipe()
+            tools.standardOutput = output
+            tools.standardError = FileHandle.nullDevice
+            try tools.run()
+            let directory = String(decoding: output.fileHandleForReading.readDataToEndOfFile(), as: UTF8.self)
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            tools.waitUntilExit()
+            guard tools.terminationStatus == 0,
+                  FileManager.default.isExecutableFile(atPath: directory + "/usr/bin/python3") else {
+                throw Failure(errorDescription: "Claude connection needs Python 3 from Apple’s Command Line Tools. Install the tools, then choose Repair Claude connection. Your settings were left unchanged.")
+            }
             let process = Process()
             process.executableURL = URL(fileURLWithPath: "/usr/bin/python3")
             process.arguments = [script.path]

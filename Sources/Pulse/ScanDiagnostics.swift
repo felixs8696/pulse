@@ -16,6 +16,7 @@ enum ScanDiagnostics {
             print("\(name) running: \(!NSRunningApplication.runningApplications(withBundleIdentifier: bundle).isEmpty)")
         }
         print("Window: past 7 days. No chat content included. iTerm automation is not requested.")
+        print("Claude hook setup: \(ClaudeConnection.inspect())")
         let lock = NSLock()
         let completed = DispatchGroup()
         let start = Date()
@@ -29,7 +30,8 @@ enum ScanDiagnostics {
             case .slow(let provider): print("\(provider.label): still scanning at \(elapsed)")
             case .finished(let result):
                 for source in result.sources {
-                    print("\(source.provider.label): \(source.available ? "readable" : "unavailable"), \(source.count) sessions, \(elapsed)")
+                    let routed = result.sessions.filter { $0.provider == source.provider && $0.hasOpenDestination }.count
+                    print("\(source.provider.label): \(source.available ? "readable" : "unavailable"), \(source.count) sessions, \(routed) with a known route, \(elapsed)")
                 }
                 completed.leave()
             }
