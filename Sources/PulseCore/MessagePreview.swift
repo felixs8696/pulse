@@ -38,24 +38,36 @@ public enum MessagePreview {
     }
 
     private static func stripClientContext(from result: inout String) -> Bool {
-        // Providers identify user turns structurally. Desktop clients sometimes
-        // embed extra context in those turns. Only unwrap known, whole-line
-        // envelopes at the boundaries, preserving ordinary XML, Markdown and code.
+        // Match whole client envelopes at message boundaries, never arbitrary
+        // markup inside a query. String boundaries keep large transcripts cheap.
         let tags = ["environment_context", "user_instructions", "system-reminder",
                     "permissions instructions", "in-app-browser-context"]
         var removed = false
         var changed = true
         while changed {
             changed = false
+            result = result.trimmingCharacters(in: .whitespacesAndNewlines)
             for tag in tags {
-                let name = NSRegularExpression.escapedPattern(for: tag)
-                let close = "</" + name + ">"
-                let block = "<" + name + "(?:\\s[^>]*)?>(?:(?!" + close + ")[\\s\\S])*" + close
-                let leading = "\\A\\s*" + block + "(?:[ \\t]*\\r?\\n|[ \\t]*\\z)"
-                let trailing = "(?:\\A|(?<=\\n))[ \\t]*" + block + "\\s*\\z"
-                for pattern in [leading, trailing] {
-                    if let range = result.range(of: pattern, options: .regularExpression) {
-                        result.removeSubrange(range)
+                let opening = "<" + tag
+                let closing = "</" + tag + ">"
+                if result.hasPrefix(opening),
+                   let end = result.range(of: closing),
+                   isOpeningTag(result[...], name: opening) {
+                    let remainder = result[end.upperBound...].drop(while: { $0 == " " || $0 == "\t" })
+                    if remainder.isEmpty || remainder.first?.isNewline == true {
+                        result = String(remainder).trimmingCharacters(in: .whitespacesAndNewlines)
+                        removed = true
+                        changed = true
+                    }
+                }
+                if result.hasSuffix(closing),
+                   let start = result.range(of: opening, options: .backwards),
+                   isOpeningTag(result[start.lowerBound...], name: opening),
+                   result.range(of: closing, range: start.upperBound..<result.endIndex)?.upperBound == result.endIndex {
+                    let before = result[..<start.lowerBound]
+                    let line = before.split(separator: "\n", omittingEmptySubsequences: false).last ?? ""
+                    if line.allSatisfy({ $0 == " " || $0 == "\t" || $0 == "\r" }) {
+                        result = String(before).trimmingCharacters(in: .whitespacesAndNewlines)
                         removed = true
                         changed = true
                     }
@@ -63,6 +75,12 @@ public enum MessagePreview {
             }
         }
         return removed
+    }
+
+    private static func isOpeningTag(_ text: Substring, name: String) -> Bool {
+        let rest = text.dropFirst(name.count)
+        guard let next = rest.first, next == ">" || next.isWhitespace else { return false }
+        return rest.contains(">")
     }
 
     private static func content(_ value: Any?) -> String? {
