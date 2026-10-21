@@ -71,6 +71,10 @@ final class ReplyBannerController: ObservableObject {
         open?(session)
     }
 
+    func dismissAnswered(in sessions: [Session]) {
+        for id in stack.answeredIDs(in: sessions) { dismiss(id) }
+    }
+
     func hover(_ inside: Bool, id: String, display: Int) {
         guard !exitingIDs.contains(id), stack.sessions.contains(where: { $0.id == id }) else { return }
         if inside { hoveredDisplays[id, default: []].insert(display) }

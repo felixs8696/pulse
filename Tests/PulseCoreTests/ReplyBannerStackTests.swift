@@ -25,6 +25,48 @@ struct ReplyBannerStackTests {
         #expect(stack.upsert([reply("one", at: 1)]).isEmpty)
         #expect(stack.sessions.last == updated)
     }
+    @Test func sendingAnotherMessageHandlesOnlyThatChatsBanner() {
+        var stack = ReplyBannerStack()
+        var original = reply("one", at: 10)
+        original.lastUserMessageAt = Date(timeIntervalSince1970: 5)
+        original.lastUserMessage = "Try again"
+        stack.upsert([original, reply("two", at: 10), reply("one", provider: .claude, at: 10)])
+        var answered = original
+        answered.state = .running
+        answered.lastUserMessageAt = Date(timeIntervalSince1970: 11)
+        // Repeating exactly the same text is still a new message.
+        #expect(stack.answeredIDs(in: [answered]) == ["codex:one"])
+        #expect(stack.sessions.count == 3)
+    }
+
+    @Test func activityAndLateLoadedHistoryDoNotDismissReplies() {
+        var stack = ReplyBannerStack()
+        stack.upsert([reply("one", at: 10)])
+        var latest = reply("one", at: 20, title: "Updated title")
+        latest.state = .running
+        #expect(stack.answeredIDs(in: [latest]).isEmpty)
+        latest.lastUserMessageAt = Date(timeIntervalSince1970: 9)
+        latest.lastUserMessage = "Previously missing preview"
+        #expect(stack.answeredIDs(in: [latest]).isEmpty)
+        latest.lastUserMessageAt = Date(timeIntervalSince1970: 10)
+        #expect(stack.answeredIDs(in: [latest]).isEmpty)
+        latest.lastUserMessageAt = Date(timeIntervalSince1970: 21)
+        latest.isSubagent = true
+        #expect(stack.answeredIDs(in: [latest]).isEmpty)
+        #expect(stack.answeredIDs(in: []).isEmpty)
+    }
+
+    @Test func newerReplyStartsItsOwnMessageBaseline() {
+        var stack = ReplyBannerStack()
+        stack.upsert([reply("one", at: 10)])
+        var next = reply("one", at: 30)
+        next.lastUserMessageAt = Date(timeIntervalSince1970: 20)
+        stack.upsert([next])
+        #expect(stack.answeredIDs(in: [next]).isEmpty)
+        next.lastUserMessageAt = Date(timeIntervalSince1970: 31)
+        #expect(stack.answeredIDs(in: [next]) == ["codex:one"])
+    }
+
     @Test func dismissingOneLeavesTheOtherAndProviderIDsCannotCollide() {
         var stack = ReplyBannerStack()
         stack.upsert([reply("same"), reply("same", provider: .claude)])

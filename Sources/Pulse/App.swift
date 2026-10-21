@@ -116,6 +116,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             guard let self, !self.store.expanded, !self.dragging else { return }
             self.presentReplyBanners(sessions)
         }.store(in: &subscriptions)
+        store.$sessions.sink { [weak self] sessions in
+            self?.replyBanners.dismissAnswered(in: sessions)
+        }.store(in: &subscriptions)
         store.$replyBannersEnabled.dropFirst().filter { !$0 }.sink { [weak self] _ in
             self?.replyBanners.dismissAll()
         }.store(in: &subscriptions)
