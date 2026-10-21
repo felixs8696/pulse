@@ -36,7 +36,9 @@ public final class SessionScanner: @unchecked Sendable {
         } catch {
             health.append(SourceHealth(provider, count: 0, message: error.localizedDescription, available: false))
         }
-        sessions = sessions.map { original in
+        sessions = sessions.filter {
+            pinnedIDs.contains($0.id) || max($0.updatedAt, $0.lastUserMessageAt ?? .distantPast) >= cutoff
+        }.map { original in
             var session = original
             if session.state == .running && Date().timeIntervalSince(session.updatedAt) > 21_600 {
                 session.state = .unknown; session.detail = "No recent activity; open to check"
