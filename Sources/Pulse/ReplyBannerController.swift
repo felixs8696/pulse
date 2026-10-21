@@ -7,7 +7,7 @@ import PulseCore
 @MainActor
 final class ReplyBannerController {
     private let window: NSPanel = {
-        let panel = NSPanel(contentRect: .zero, styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
+        let panel = ShelfPanel(contentRect: .zero, styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
         panel.title = "Reply ready"
         panel.identifier = NSUserInterfaceItemIdentifier("ReplyBanner")
         panel.isOpaque = false
@@ -31,7 +31,7 @@ final class ReplyBannerController {
     private var closing = false
     private var generation = 0
 
-    func enqueue(_ sessions: [Session], pill: NSWindow, screen: CGRect, open: @escaping (Session) -> Void) {
+    func enqueue(_ sessions: [Session], pill: NSWindow, screen: CGRect, preview: Bool = false, open: @escaping (Session) -> Void) {
         self.pill = pill
         self.screen = screen
         self.open = open
@@ -39,6 +39,7 @@ final class ReplyBannerController {
             pending.append(session)
         }
         if current == nil { showNext() }
+        if preview { window.makeKey() }
     }
 
     func dismissAll() {

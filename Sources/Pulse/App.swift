@@ -223,12 +223,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         panel.orderFrontRegardless()
         savePosition()
     }
-    private func presentReplyBanners(_ sessions: [Session]) {
+    private func presentReplyBanners(_ sessions: [Session], preview: Bool = false) {
         // Use the display under the pointer, without moving the pinned session shelf.
         let target = NSScreen.screens.first { $0.frame.contains(NSEvent.mouseLocation) }
         let pill = target.flatMap { displayPills[displayID($0)] } ?? panel!
         guard let screen = pill.screen ?? target ?? NSScreen.main else { return }
-        replyBanners.enqueue(sessions, pill: pill, screen: screen.visibleFrame) { [weak self] session in
+        replyBanners.enqueue(sessions, pill: pill, screen: screen.visibleFrame, preview: preview) { [weak self] session in
             guard let self else { return }
             if session.nativeID == "banner-preview" { self.store.presentation.holdOpen() }
             else { self.store.open(session) }
@@ -239,7 +239,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         let sample = Session(provider: .codex, nativeID: "banner-preview", title: "Your agent’s reply is ready", project: "Pulse", updatedAt: Date(), state: .ready,
                              lastUserMessage: "Click a reply banner to return to its conversation.")
         store.presentation.dismiss()
-        presentReplyBanners([sample])
+        presentReplyBanners([sample], preview: true)
     }
     private func updateHover() {
         hoverTask?.cancel()
