@@ -10,7 +10,7 @@ final class SessionStore: ObservableObject {
     @Published var pins: Set<String>
     @Published var query = ""
     @Published var provider: Provider?
-    @Published var filter: ShelfFilter = .all
+    @Published var filter: ShelfFilter = .pinned
     @Published var refreshing = false
     @Published var lastScan: Date?
     @Published var error: String?
