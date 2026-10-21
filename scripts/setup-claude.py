@@ -53,7 +53,7 @@ def main():
         json.dump(settings, handle, indent=2)
         handle.write("\n")
     os.replace(temp, settings_file)
-    print("Pulse hooks removed." if remove else "Pulse hooks enabled. New Claude sessions will report exact attention states and iTerm pane IDs.")
+    print("Pulse hooks removed." if remove else "Pulse hooks enabled. Keep your Claude sessions open and continue with your next message or tool action. If a session does not appear, use /hooks in that session to check that the Pulse hooks are loaded.")
 
 
 if __name__ == "__main__":
