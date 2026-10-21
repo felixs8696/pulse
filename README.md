@@ -22,19 +22,23 @@
 
 <p align="center"><sub>Screenshots use sample conversations.</sub></p>
 
-## How it works
+## How to use it
 
-Pulse keeps your Claude Code, Codex, and Cursor sessions in one list. A floating pill shows how many agents are working and how many are waiting for you.
+Hover over the pill to open your session list. Each row shows your last message. Click a row to return to that session in its original app.
 
-Hover over the pill to open the list. Each row shows your last message; click it to return to that session in its original app. Click the pill to keep the panel open while you work.
-
+- Click the pill to keep the panel open. Click again to collapse it, or press **⌃ Space** to show or hide it.
+- Drag the pill or the panel's title area to move them together.
 - Pin conversations you want to keep in the Pinned tab.
 - Search by message, title, or project.
 - Mark replies read when you've dealt with them. You can mark them unread again, and opening a session doesn't clear it.
+- Mute sounds from the panel or menu bar.
 
-When a reply is ready, Pulse plays a two-tap chime. The pitch is based on the session, so you'll hear the same tone when that agent finishes again. You can mute sounds from the panel or menu bar.
+## Features
 
-Each moving pulse around the pill's border represents one agent currently working: three pulses means three active agents. As agents finish, their pulses fade away. The pill stays visible across Spaces; drag it or the panel's title area to move them together.
+- Claude Code, Codex, and Cursor sessions in one list, with counts for agents working and waiting for you.
+- One moving pulse around the pill's border per working agent. Three pulses means three active agents. As agents finish, their pulses fade away.
+- A two-tap chime when a reply is ready. Each session keeps the same pitch, so you can start recognizing it by sound.
+- A floating pill that stays visible across Spaces.
 
 <table>
   <tr>
