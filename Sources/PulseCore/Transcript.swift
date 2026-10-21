@@ -23,7 +23,9 @@ struct TranscriptSlice {
     static func lastUserMessageDate(path: String, provider: Provider, sinceOffset: Int = 0) -> Date? {
         guard let file = FileHandle(forReadingAtPath: path), let size = try? file.seekToEnd() else { return nil }
         defer { try? file.close() }
-        let lowerBound = UInt64(max(0, sinceOffset - 65_536))
+        // A first scan must not walk gigabytes of old tool output to find one date.
+        // Recent history metadata and later appended user messages fill any gap.
+        let lowerBound = max(UInt64(max(0, sinceOffset - 65_536)), size > 8_388_608 ? size - 8_388_608 : 0)
         var end = size
         var remainder = Data()
         while end > lowerBound {

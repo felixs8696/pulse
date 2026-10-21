@@ -39,8 +39,10 @@ final class SessionStore: ObservableObject {
     @Published var launchAtLogin = false
     private var reviewInbox: ReviewInbox
     private let defaults = UserDefaults.standard
-    private let scanner = SessionScanner()
-    private let queue = DispatchQueue(label: "local.pulse.scanner", qos: .utility)
+    private let scanner = SessionScanCoordinator()
+    private var scanningProviders: Set<Provider> = []
+    @Published private(set) var slowProviders: Set<Provider> = []
+    private var checkingTerminals = false
     private var timer: Timer?
     @Published private var openITermPanes: Set<String>?
     @Published private var closedTerminals: Set<String> = []
@@ -65,33 +67,52 @@ final class SessionStore: ObservableObject {
         }
     }
     func refresh() {
-        guard !refreshing else { return }
-        refreshing = true
-        queue.async { [scanner, weak self] in
-            let result = scanner.scan()
-            Task { @MainActor [weak self] in
-                guard let self else { return }
-                let panes = await SessionLauncher.openITermPaneIDs()
-                if let panes { self.openITermPanes = panes }
-                let unavailable = Set(result.sources.filter { !$0.available }.map(\.provider))
-                let next = result.sessions + self.sessions.filter { unavailable.contains($0.provider) }
-                let live = next.filter { self.isVisible($0) }
-                let newAttention = self.attentionTracker.update(live, availableProviders: Set(result.sources.filter(\.available).map(\.provider)))
-                let todayIDs = Set(next.filter { SessionScope.isToday($0) }.map(\.id))
-                let readyIDs = newAttention.filter { todayIDs.contains($0) }
-                if self.soundsEnabled {
-                    self.chimes.play(readyIDs, tones: self.sessionTones.overrides)
-                }
-                if self.replyBannersEnabled, !readyIDs.isEmpty {
-                    let byID = Dictionary(live.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
-                    self.completedReplies.send(readyIDs.compactMap { byID[$0] })
-                }
-                if self.sessions != next { self.sessions = next }
-                if self.sources != result.sources { self.sources = result.sources }
-                self.lastScan = Date()
-                self.refreshing = false
-            }
+        scanner.refresh(pinnedIDs: pins) { [weak self] event in
+            Task { @MainActor [weak self] in self?.receiveScan(event) }
         }
+        // Automation can wait for permission. Never hold chat discovery behind it.
+        guard !checkingTerminals else { return }
+        checkingTerminals = true
+        Task { [weak self] in
+            let panes = await SessionLauncher.openITermPaneIDs()
+            guard let self else { return }
+            if let panes { self.openITermPanes = panes }
+            self.checkingTerminals = false
+        }
+    }
+    private func receiveScan(_ event: SessionScanCoordinator.Event) {
+        switch event {
+        case .started(let provider):
+            scanningProviders.insert(provider)
+            if !sources.contains(where: { $0.provider == provider }) {
+                sources.append(SourceHealth(provider, count: 0, message: "Checking local chats…", available: false))
+            }
+        case .slow(let provider):
+            guard scanningProviders.contains(provider) else { return }
+            slowProviders.insert(provider)
+            let message = "This app is taking longer to scan. Other apps continue loading. Try quitting and reopening Pulse if it stays stuck."
+            sources = sources.map { $0.provider == provider ? SourceHealth(provider, count: $0.count, message: message, available: false) : $0 }
+            // Leave the indefinite startup screen even if no source has finished yet.
+            lastScan = lastScan ?? Date()
+        case .finished(let result):
+            guard let health = result.sources.first else { return }
+            scanningProviders.remove(health.provider)
+            slowProviders.remove(health.provider)
+            sources = sources.filter { $0.provider != health.provider } + result.sources
+            let next = health.available ? sessions.filter { $0.provider != health.provider } + result.sessions : sessions
+            let live = next.filter(isVisible)
+            let newAttention = attentionTracker.update(live, availableProviders: health.available ? [health.provider] : [])
+            let todayIDs = Set(next.filter { SessionScope.isToday($0) }.map(\.id))
+            let readyIDs = newAttention.filter { todayIDs.contains($0) }
+            if soundsEnabled { chimes.play(readyIDs, tones: sessionTones.overrides) }
+            if replyBannersEnabled, !readyIDs.isEmpty {
+                let byID = Dictionary(live.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+                completedReplies.send(readyIDs.compactMap { byID[$0] })
+            }
+            if sessions != next { sessions = next }
+            lastScan = Date()
+        }
+        refreshing = !scanningProviders.isEmpty
     }
     func needsAttention(_ s: Session) -> Bool {
         SessionScope.needsReviewToday(s, inbox: reviewInbox)

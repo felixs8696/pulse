@@ -67,7 +67,7 @@ struct HistoryReplayTests {
         let sql = "CREATE TABLE threads(id TEXT,title TEXT,cwd TEXT,updated_at INTEGER,rollout_path TEXT,source TEXT,archived INTEGER); INSERT INTO threads VALUES ('restored','Old chat','/tmp',0,'\(log.path)','vscode',0);"
         #expect(sqlite3_exec(database, sql, nil, nil, nil) == SQLITE_OK)
         let scanner = SessionScanner(home: root)
-        let old = try #require(scanner.scan().sessions.first)
+        let old = try #require(scanner.scan(pinnedIDs: ["codex:restored"]).sessions.first)
         #expect(old.replayedAt == replay)
         #expect(old.updatedAt == original.addingTimeInterval(30))
         #expect(old.lastUserMessageAt == original)
@@ -76,7 +76,7 @@ struct HistoryReplayTests {
         try write(restored + [event("task_started", at: liveDate, fields: ["started_at": liveDate.timeIntervalSince1970]),
                               event("user_message", at: liveDate, fields: ["message": "A new request"]),
                               event("task_complete", at: liveDate.addingTimeInterval(30))])
-        let live = try #require(scanner.scan().sessions.first)
+        let live = try #require(scanner.scan(pinnedIDs: ["codex:restored"]).sessions.first)
         #expect(live.replayedAt == nil)
         #expect(live.lastUserMessage == "A new request")
         #expect(SessionScope.needsReviewToday(live, inbox: ReviewInbox(), now: liveDate))

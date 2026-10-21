@@ -96,7 +96,7 @@ Claude hooks provide precise approval states. Codex and Cursor use lifecycle eve
 
 Restored Codex history keeps its original timestamps and stays out of Waiting and completion sounds until a genuine live turn runs. Generated notifications don't replace your query. Connections & setup reports missing or unreadable sources. Source-app format changes may require compatibility fixes.
 
-The scanner polls every three seconds, discovers new Claude transcript files every fifteen seconds, and caches bounded transcript reads. Databases are read-only with WAL visibility. Authentication files aren't read. Conversations aren't uploaded or copied into a second transcript store.
+The scanner checks each app independently every three seconds and discovers new Claude transcript files every fifteen seconds. It loads chats active in the past seven days, plus pinned chats. Sending a new message in an older conversation brings it back. Simply opening a chat may not update its activity timestamp. Child-agent transcripts are skipped. Transcript reads and backward searches are bounded, so startup does not walk entire histories. Slow sources show a message in Connections & setup after twelve seconds, while other apps continue loading. iTerm permission checks run separately from chat discovery. Databases are read-only with WAL visibility. Authentication files aren't read. Conversations aren't uploaded or copied into a second transcript store.
 
 ## Builds and diagnostics
 

@@ -9,22 +9,32 @@ public final class SessionScanner: @unchecked Sendable {
     private var claudeFiles: [URL] = []
     private var cursorClaudeWorkspaces: [String: String] = [:]
     private var lastDiscovery = Date.distantPast
-    public init(home: URL = FileManager.default.homeDirectoryForCurrentUser) { self.home = home }
+    private let lookback: TimeInterval
+    private var cutoff = Date.distantPast
+    private var pinnedIDs: Set<String> = []
+    public init(home: URL = FileManager.default.homeDirectoryForCurrentUser, lookback: TimeInterval = 7 * 86_400) {
+        self.home = home; self.lookback = lookback
+    }
     private func path(_ relative: String) -> String { home.appendingPathComponent(relative).path }
 
-    public func scan() -> ScanResult {
+    public func scan(pinnedIDs: Set<String> = [], now: Date = Date()) -> ScanResult {
+        let results = Provider.allCases.map { scan(provider: $0, pinnedIDs: pinnedIDs, now: now) }
+        return ScanResult(sessions: results.flatMap(\.sessions), sources: results.flatMap(\.sources))
+    }
+
+    public func scan(provider: Provider, pinnedIDs: Set<String> = [], now: Date = Date()) -> ScanResult {
+        self.cutoff = now.addingTimeInterval(-lookback)
+        self.pinnedIDs = pinnedIDs
         var sessions: [Session] = []
         var health: [SourceHealth] = []
-        for provider in Provider.allCases {
-            do {
-                let result: [Session]
-                switch provider { case .codex: result = try codex(); case .claude: result = try claude(); case .cursor: result = try cursor() }
-                let topLevel = result.filter { !$0.isSubagent }
-                sessions += topLevel
-                health.append(SourceHealth(provider, count: topLevel.count, message: "Reading local sessions", available: true))
-            } catch {
-                health.append(SourceHealth(provider, count: 0, message: error.localizedDescription, available: false))
-            }
+        do {
+            let result: [Session]
+            switch provider { case .codex: result = try codex(); case .claude: result = try claude(); case .cursor: result = try cursor() }
+            let topLevel = result.filter { !$0.isSubagent }
+            sessions += topLevel
+            health.append(SourceHealth(provider, count: topLevel.count, message: "Reading local sessions", available: true))
+        } catch {
+            health.append(SourceHealth(provider, count: 0, message: error.localizedDescription, available: false))
         }
         sessions = sessions.map { original in
             var session = original
@@ -47,8 +57,14 @@ public final class SessionScanner: @unchecked Sendable {
         let columns = try db.columns("threads")
         let optional = ["updated_at_ms", "recency_at_ms", "agent_nickname", "agent_role", "originator", "preview", "name"]
             .filter { columns.contains($0) }.map { ", \($0)" }.joined()
-        let rows = try db.rows("SELECT id, title, cwd, updated_at, rollout_path, source\(optional) FROM threads WHERE archived = 0 ORDER BY updated_at DESC")
-        return rows.map { row in
+        let ageFields = ["updated_at_ms", "recency_at_ms"].filter { columns.contains($0) }
+        let recent = (["updated_at >= ?"] + ageFields.map { "\($0) >= ?" }).joined(separator: " OR ")
+        let pins = nativePins(.codex)
+        let pinned = pins.isEmpty ? "" : " OR id IN (\(pins.map { _ in "?" }.joined(separator: ",")))"
+        let dates = [String(cutoff.timeIntervalSince1970)] + ageFields.map { _ in String(cutoff.timeIntervalSince1970 * 1000) }
+        let rows = try db.rows("SELECT id, title, cwd, updated_at, rollout_path, source\(optional) FROM threads WHERE archived = 0 AND (\(recent)\(pinned)) ORDER BY updated_at DESC", bindings: dates + pins)
+        return rows.compactMap { row in
+            guard (row["agent_nickname"] ?? "").isEmpty, !(row["source"] ?? "").contains("subagent") else { return nil }
             let id = row["id"] ?? ""
             let log = row["rollout_path"] ?? ""
             let metadataDate = Date(timeIntervalSince1970: Double(row["updated_at_ms"] ?? "").map { $0 / 1000 } ?? Double(row["updated_at"] ?? "0") ?? 0)
@@ -95,12 +111,23 @@ public final class SessionScanner: @unchecked Sendable {
         return (a?[.modificationDate] as? Date ?? .distantPast, a?[.size] as? Int ?? 0)
     }
 
+    private func nativePins(_ provider: Provider) -> [String] {
+        let prefix = provider.rawValue + ":"
+        return pinnedIDs.filter { $0.hasPrefix(prefix) }.map { String($0.dropFirst(prefix.count)) }.sorted()
+    }
+
     private func claude() throws -> [Session] {
         let root = home.appendingPathComponent(".claude/projects")
         guard fm.fileExists(atPath: root.path) else { throw DatabaseError.unavailable("No Claude Code session folder found") }
         if Date().timeIntervalSince(lastDiscovery) > 15 {
-            let enumerator = fm.enumerator(at: root, includingPropertiesForKeys: [.contentModificationDateKey], options: [.skipsHiddenFiles])
-            claudeFiles = (enumerator?.allObjects as? [URL] ?? []).filter { $0.pathExtension == "jsonl" }
+            let enumerator = fm.enumerator(at: root, includingPropertiesForKeys: [.isDirectoryKey], options: [.skipsHiddenFiles])
+            claudeFiles = []
+            while let file = enumerator?.nextObject() as? URL {
+                // Helper transcripts can dwarf the actual conversations. They never
+                // appear in Pulse, so don't parse or search their history at startup.
+                if file.lastPathComponent == "subagents" { enumerator?.skipDescendants(); continue }
+                if file.pathExtension == "jsonl" { claudeFiles.append(file) }
+            }
             cursorClaudeWorkspaces = CursorClaudeWorkspaces.read(home: home)
             lastDiscovery = Date()
         }
@@ -109,8 +136,13 @@ public final class SessionScanner: @unchecked Sendable {
         var history: [String: [String: Any]] = [:]
         var latestPrompts: [String: String] = [:]
         var latestPromptDates: [String: Date] = [:]
-        if let data = fm.contents(atPath: path(".claude/history.jsonl")) {
-            for item in TranscriptSlice.parse(data, dropFirst: false) {
+        if let file = FileHandle(forReadingAtPath: path(".claude/history.jsonl")) {
+            defer { try? file.close() }
+            let size = (try? file.seekToEnd()) ?? 0
+            let start = size > 4_194_304 ? size - 4_194_304 : 0
+            try? file.seek(toOffset: start)
+            let data = (try? file.read(upToCount: 4_194_304)) ?? Data()
+            for item in TranscriptSlice.parse(data, dropFirst: start > 0) {
                 guard let id = item["sessionId"] as? String,
                       let display = item["display"] as? String, !display.isEmpty else { continue }
                 if history[id] == nil && !display.hasPrefix("/") { history[id] = item }
@@ -124,6 +156,7 @@ public final class SessionScanner: @unchecked Sendable {
         for file in claudeFiles {
             let id = file.deletingPathExtension().lastPathComponent
             let sig = fileSignature(file.path)
+            guard sig.0 >= cutoff || pinnedIDs.contains("claude:" + id) else { continue }
             var s: Session
             if let cached = cache["claude:" + file.path], cached.0 == sig.0, cached.1 == sig.1 { s = cached.2 }
             else {
@@ -208,18 +241,24 @@ public final class SessionScanner: @unchecked Sendable {
         // Current Cursor versions index headers. Older versions store full headers in workspace databases.
         var rows: [[String: String]]
         do {
-            rows = try db.rows("SELECT composerId, recency, value FROM composerHeaders WHERE COALESCE(isArchived,0)=0 ORDER BY recency DESC")
+            let pins = nativePins(.cursor)
+            let pinned = pins.isEmpty ? "" : " OR composerId IN (\(pins.map { _ in "?" }.joined(separator: ",")))"
+            rows = try db.rows("SELECT composerId, recency, value FROM composerHeaders WHERE COALESCE(isArchived,0)=0 AND (recency >= ?\(pinned)) ORDER BY recency DESC", bindings: [String(cutoff.timeIntervalSince1970 * 1000)] + pins)
         } catch {
-            rows = try db.rows("SELECT substr(key,14) AS composerId, value FROM cursorDiskKV WHERE key LIKE 'composerData:%'")
+            let pins = nativePins(.cursor).map { "composerData:" + $0 }
+            let pinned = pins.isEmpty ? "" : " OR key IN (\(pins.map { _ in "?" }.joined(separator: ",")))"
+            rows = try db.rows("SELECT substr(key,14) AS composerId, value FROM cursorDiskKV WHERE key LIKE 'composerData:%' AND (COALESCE(json_extract(value,'$.lastUpdatedAt'),json_extract(value,'$.createdAt'),0) >= CAST(? AS REAL)\(pinned))", bindings: [String(cutoff.timeIntervalSince1970 * 1000)] + pins)
         }
         var result: [Session] = []
         for row in rows {
             guard let id = row["composerId"], id != "empty-state-draft", let header = JSON.object(row["value"] ?? "") else { continue }
-            guard header["isDraft"] as? Bool != true, header["isArchived"] as? Bool != true else { continue }
+            guard header["isDraft"] as? Bool != true, header["isArchived"] as? Bool != true,
+                  header["subagentInfo"] == nil, !id.hasPrefix("task-") else { continue }
             // Project out metadata inside SQLite so encrypted contexts and transcript bodies aren't loaded.
             let fields = ["name", "subtitle", "status", "lastUpdatedAt", "createdAt", "hasUnreadMessages", "hasBlockingPendingActions", "hasPendingPlan", "isContinuationInProgress", "generatingBubbleIds", "workspaceIdentifier", "fullConversationHeadersOnly", "subagentInfo"]
             let projection = fields.map { "json_extract(value,'$.\($0)') AS \($0)" }.joined(separator: ",")
             let meta = try db.rows("SELECT \(projection) FROM cursorDiskKV WHERE key=?", bindings: ["composerData:" + id]).first ?? [:]
+            guard meta["subagentInfo"] == nil else { continue }
             let conversations = meta["fullConversationHeadersOnly"].flatMap { try? JSONSerialization.jsonObject(with: Data($0.utf8)) as? [[String: Any]] } ?? []
             guard !conversations.isEmpty || !(meta["name"] ?? header["name"] as? String ?? "").isEmpty else { continue }
             let workspace = JSON.object(meta["workspaceIdentifier"] ?? "") ?? header["workspaceIdentifier"] as? [String: Any] ?? [:]

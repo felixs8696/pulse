@@ -365,6 +365,7 @@ private struct ShelfSessionList: View {
         }
     }
     private var emptyStateTitle: String {
+        if !store.slowProviders.isEmpty && store.visibleBase.isEmpty { return "Some apps are taking longer" }
         if store.lastScan == nil { return "Finding your chats…" }
         if store.hasScope { return "No matching chats" }
         switch store.filter {
@@ -376,6 +377,7 @@ private struct ShelfSessionList: View {
         }
     }
     private var emptyStateHint: String {
+        if !store.slowProviders.isEmpty && store.visibleBase.isEmpty { return "Open Connections & setup in the top-right menu for details." }
         if store.lastScan == nil { return "Connecting to your agent apps." }
         if store.hasScope { return "Try another search or clear your filters." }
         switch store.filter {

@@ -79,7 +79,7 @@ Pulse is a menu-bar app, so it won't show up in the Dock. You can turn on launch
 
 Follow the [setup guide](DISTRIBUTION.md#connect-your-apps) to install the Claude hooks and Cursor extension included in the ZIP.
 
-Pulse tracks the conversations you interact with directly and excludes child agents and background tasks. Claude chat, Cowork, and ChatGPT chat aren't supported. Codex session links open in Codex Desktop. Returning to the original CLI pane isn't supported.
+Pulse tracks conversations active in the past seven days, plus anything you pin. Sending a message in an older chat brings it back. It excludes child agents and background tasks. Claude chat, Cowork, and ChatGPT chat aren't supported. Codex session links open in Codex Desktop. Returning to the original CLI pane isn't supported.
 
 ## Privacy and limitations
 
