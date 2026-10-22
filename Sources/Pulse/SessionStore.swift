@@ -1,6 +1,7 @@
 import AppKit
 import SwiftUI
 import Combine
+import UniformTypeIdentifiers
 import PulseCore
 
 @MainActor
@@ -21,6 +22,40 @@ final class SessionStore: ObservableObject {
         if !clickPillToKeepOpen { presentation.releaseHold() }
     } }
     @Published var showConnections = false
+    @Published private(set) var exportingDiagnostics = false
+    @Published private(set) var diagnosticExportStatus: String?
+    var orderedSources: [SourceHealth] {
+        Provider.allCases.map { provider in
+            sources.first { $0.provider == provider }
+                ?? SourceHealth(provider, count: 0, message: "Checking local chats…", available: false)
+        }
+    }
+
+    func exportDiagnostics() {
+        guard !exportingDiagnostics else { return }
+        let panel = NSSavePanel()
+        panel.allowedContentTypes = [.plainText]
+        panel.nameFieldStringValue = "Pulse-diagnostics.txt"
+        panel.directoryURL = FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first
+        panel.message = "Share this report for debugging. It excludes chat content, session IDs, credentials, and local paths."
+        panel.canCreateDirectories = true
+        panel.begin { [weak self] result in
+            guard result == .OK, let url = panel.url, let self else { return }
+            self.exportingDiagnostics = true
+            self.diagnosticExportStatus = "Checking connections…"
+            Task { @MainActor in
+                let report = await Task.detached(priority: .userInitiated) { ScanDiagnostics.report() }.value
+                do {
+                    try report.write(to: url, atomically: true, encoding: .utf8)
+                    self.diagnosticExportStatus = "Diagnostic report saved."
+                    NSWorkspace.shared.activateFileViewerSelecting([url])
+                } catch {
+                    self.diagnosticExportStatus = "Couldn’t save the report. Try another folder."
+                }
+                self.exportingDiagnostics = false
+            }
+        }
+    }
     @Published private(set) var claudeConnection = ClaudeConnection.inspect()
     @Published private(set) var connectingClaude = false
     @Published private(set) var claudeConnectionError: String?

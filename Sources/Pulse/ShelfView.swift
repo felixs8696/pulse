@@ -200,9 +200,8 @@ struct ShelfView: View {
             SoundToggleButton(store: store)
             Menu {
                 Button(store.showConnections ? "Hide connections" : "Connections & setup") { store.showConnections.toggle(); store.presentation.show() }
-                Button(store.claudeConnection == .installed ? "Repair Claude connection" : "Connect Claude Code") { store.connectClaude() }
-                    .disabled(store.connectingClaude || store.claudeConnection == .disabled)
-                Toggle("Automatically connect Claude Code", isOn: $store.automaticClaudeSetup)
+                Button(store.exportingDiagnostics ? "Exporting diagnostics…" : "Export diagnostics…") { store.exportDiagnostics() }
+                    .disabled(store.exportingDiagnostics)
                 Button("Mark displayed replies read") { store.markDisplayedRead() }
                 Button("Refresh now") { store.refresh() }
                 Divider()
@@ -266,7 +265,7 @@ struct ShelfView: View {
     }
     private var connections: some View {
         VStack(alignment: .leading, spacing: 8) {
-            ForEach(store.sources, id: \.provider) { source in
+            ForEach(store.orderedSources, id: \.provider) { source in
                 VStack(alignment: .leading, spacing: 4) {
                 HStack {
                     ProviderLogo(provider: source.provider, size: 14).frame(width: 16)
@@ -275,9 +274,24 @@ struct ShelfView: View {
                     Text(source.available ? "\(source.count) sessions" : "Unavailable").foregroundStyle(source.available ? Ink.muted : Ink.waiting)
                 }.font(.system(size: 11)).help(source.message)
                     if !source.available { Text(source.message).font(.system(size: 10)).foregroundStyle(Ink.waiting).fixedSize(horizontal: false, vertical: true) }
-                }
+                    if source.provider == .claude {
+                        claudeConnectionContent
+                        if store.claudeConnection == .installed {
+                            Button("Repair connection") { store.connectClaude() }
+                                .disabled(store.connectingClaude)
+                        }
+                        Toggle("Connect automatically", isOn: $store.automaticClaudeSetup)
+                    } else {
+                        Text(source.provider == .codex
+                             ? "Reads local Codex chats. No hooks or Python setup needed."
+                             : "Reads local Cursor chats. Install the bundled Cursor bridge to open exact chats and panes.")
+                            .font(.system(size: 10)).foregroundStyle(Ink.muted)
+                    }
+                }.padding(.vertical, 4)
             }
-            claudeConnectionContent
+            if let status = store.diagnosticExportStatus {
+                Text(status).font(.system(size: 10)).foregroundStyle(Ink.muted)
+            }
         }.padding(12).background(.white.opacity(0.04), in: RoundedRectangle(cornerRadius: 10)).padding(.horizontal, 18).padding(.bottom, 12)
     }
     private var claudeConnectionCard: some View {
