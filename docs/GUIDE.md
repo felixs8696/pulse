@@ -4,7 +4,7 @@
 
 ## The pill and panel
 
-Hover the pill to open the panel. Move away from the pill and panel to collapse it, or press Escape. Clicking the pill does not keep it open. **Control–Space** shows or hides it.
+Hover the pill to open the panel. Move away from the pill and panel to collapse it, or press Escape. Clicking the pill does not keep it open by default. Enable **Click pill to keep panel open** in the top-right menu if you prefer clicking once to keep it open and again to collapse it. **Control–Space** shows or hides it.
 
 The pill stays above your windows and across Spaces. Lavender counts show working agents; white counts show sessions waiting for you today. Each working agent has a subtle trace around the pill's border. Working logos in the expanded panel dim together. Both effects respect macOS Reduce Motion.
 

@@ -16,6 +16,10 @@ final class SessionStore: ObservableObject {
     @Published var error: String?
     @Published var presentation = ShelfPresentation()
     var expanded: Bool { presentation.expanded }
+    @Published var clickPillToKeepOpen: Bool { didSet {
+        defaults.set(clickPillToKeepOpen, forKey: "clickPillToKeepOpen")
+        if !clickPillToKeepOpen { presentation.releaseHold() }
+    } }
     @Published var showConnections = false
     @Published private(set) var claudeConnection = ClaudeConnection.inspect()
     @Published private(set) var connectingClaude = false
@@ -58,6 +62,7 @@ final class SessionStore: ObservableObject {
     @Published private var closedTerminals: Set<String> = []
 
     init() {
+        clickPillToKeepOpen = UserDefaults.standard.bool(forKey: "clickPillToKeepOpen")
         automaticClaudeSetup = UserDefaults.standard.object(forKey: "automaticClaudeSetup") as? Bool ?? true
         pillOnEveryDisplay = UserDefaults.standard.object(forKey: "pillOnEveryDisplay") as? Bool ?? true
         replyBannersEnabled = UserDefaults.standard.object(forKey: "replyBannersEnabled") as? Bool ?? true

@@ -2,6 +2,27 @@ import Testing
 @testable import PulseCore
 
 struct ShelfPresentationTests {
+    @Test func optInKeepsPanelOpenUntilSecondClick() {
+        var panel = ShelfPresentation()
+        panel.applyHover(inside: true)
+        panel.clickPill(keepOpen: true)
+        panel.applyHover(inside: false)
+        #expect(panel.expanded && panel.heldOpen)
+        panel.clickPill(keepOpen: true)
+        panel.applyHover(inside: true)
+        #expect(!panel.expanded)
+    }
+
+    @Test func disablingOptionReleasesExistingHold() {
+        var panel = ShelfPresentation()
+        panel.clickPill(keepOpen: true)
+        panel.releaseHold()
+        #expect(!panel.heldOpen && !panel.expanded)
+        panel.pointerChanged(inside: false)
+        panel.applyHover(inside: true)
+        #expect(panel.expanded)
+    }
+
     @Test func repeatedClicksNeverPinPreview() {
         var panel = ShelfPresentation()
         panel.applyHover(inside: true)

@@ -161,12 +161,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             onClick: { [weak self, weak window] in
                 guard let self, let window else { return }
                 self.replyBanners.dismissAll()
-                let changed = self.activatePill(window)
+                _ = self.activatePill(window)
                 guard self.panel === window else { return }
-                if changed && self.store.expanded {
-                    self.store.presentation.show()
-                    self.shelfPanel.makeKey()
-                } else { self.togglePill() }
+                self.togglePill()
             },
             onDragChange: { [weak self, weak window] active in
                 guard let self, let window else { return nil }
@@ -440,7 +437,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
     private func togglePill() {
         hoverTask?.cancel()
-        store.presentation.clickPill()
+        store.presentation.clickPill(keepOpen: store.clickPillToKeepOpen)
         panel.orderFrontRegardless()
         if store.expanded { shelfPanel.makeKey() }
     }
