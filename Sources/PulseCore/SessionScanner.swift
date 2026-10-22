@@ -136,6 +136,7 @@ public final class SessionScanner: @unchecked Sendable {
             cursorClaudeWorkspaces = CursorClaudeWorkspaces.read(home: home)
             lastDiscovery = Date()
         }
+        let desktopSessions = ClaudeDesktopSessions.read(home: home)
         let managed = statusFiles(path(".claude/agent-manager/sessions"))
         let own = statusFiles(path(".local/share/pulse/events"))
         var history: [String: [String: Any]] = [:]
@@ -219,7 +220,8 @@ public final class SessionScanner: @unchecked Sendable {
                     }
                 }
             }
-            s.route = SessionRoute.claude(reports: reports, entrypoint: s.entrypoint, cursorWorkspace: cursorClaudeWorkspaces[id])
+            s.route = SessionRoute.claude(reports: reports, entrypoint: s.entrypoint, cursorWorkspace: cursorClaudeWorkspaces[id], desktopSessionID: desktopSessions[id]?.desktopID)
+            if s.route?.kind == .claudeDesktop, desktopSessions[id]?.archived == true { continue }
             if s.route?.kind != .iTerm { s.terminalID = nil }
             // Internal helper logs can have colliding agent IDs; nativeID includes their parent.
             if s.isSubagent {

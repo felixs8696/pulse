@@ -25,6 +25,8 @@ def host_context(environment):
             ancestors.append(pid)
             parent, executable = processes[pid]
             panel = panel or '/anthropic.claude-code-' in executable
+            if '/Claude.app/' in executable:
+                return {'host_bundle_id': 'com.anthropic.claudefordesktop', 'host_surface': 'code'}
             if '/Cursor.app/' in executable:
                 return {'host_bundle_id': 'com.todesktop.230313mzl4w4u92',
                         'host_surface': 'claudePanel' if panel else 'terminal', 'terminal_ancestor_pids': ancestors}
@@ -69,7 +71,7 @@ def record(event, environment=None, directory=None, host=None):
             "iterm_session_id": environment.get("ITERM_SESSION_ID", previous.get("iterm_session_id", "")),
             "transcript_path": event.get("transcript_path", ""), "owner_pid": os.getppid()}
     data.update(host)
-    if host.get('host_bundle_id') == 'com.todesktop.230313mzl4w4u92':
+    if host.get('host_bundle_id') in ('com.todesktop.230313mzl4w4u92', 'com.anthropic.claudefordesktop'):
         data['iterm_session_id'] = ''
     # The hook's immediate parent may be a shell, so the scanner does not treat it as the Claude owner.
     data.pop("owner_pid")

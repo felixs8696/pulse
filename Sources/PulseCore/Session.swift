@@ -60,6 +60,7 @@ public struct Session: Identifiable, Codable, Sendable, Equatable {
             case .cursorClaude: return "Cursor · Claude"
             case .cursorTerminal: return "Cursor · Terminal"
             case .iTerm: return "iTerm · Claude"
+            case .claudeDesktop: return "Claude Desktop · Code"
             default: return "Claude · Host unknown"
             }
         }
@@ -72,6 +73,7 @@ public struct Session: Identifiable, Codable, Sendable, Equatable {
         case .cursorClaude: return !(route?.workspace ?? project).isEmpty && deepLink != nil
         case .cursorTerminal:
             return !(route?.workspace ?? project).isEmpty && (route?.terminalPIDs ?? []).contains { $0 > 0 } && deepLink != nil
+        case .claudeDesktop: return deepLink != nil
         case .unknown, nil: return false
         }
     }
@@ -83,6 +85,12 @@ public struct Session: Identifiable, Codable, Sendable, Equatable {
             c.scheme = "cursor"; c.host = "local.pulse-router"; c.path = "/open"
             c.queryItems = [URLQueryItem(name: "id", value: nativeID), URLQueryItem(name: "folder", value: project)]
         case .claude:
+            if route?.kind == .claudeDesktop {
+                guard let id = route?.desktopSessionID, ClaudeDesktopSessions.validID(id) else { return nil }
+                c.scheme = "claude"; c.host = "code"; c.path = "/continue"
+                c.queryItems = [URLQueryItem(name: "session", value: id)]
+                return c.url
+            }
             guard route?.kind == .cursorClaude || route?.kind == .cursorTerminal else { return nil }
             c.scheme = "cursor"; c.host = "local.pulse-router"; c.path = "/open"
             c.queryItems = [URLQueryItem(name: "id", value: nativeID),

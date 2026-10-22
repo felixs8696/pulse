@@ -78,6 +78,17 @@ class HookTests(unittest.TestCase):
             self.assertEqual(state["iterm_session_id"], "")
             self.assertEqual(state["host_surface"], "claudePanel")
 
+    def test_desktop_host_is_detected_and_clears_inherited_terminal(self):
+        output = "101 100 /Applications/Claude.app/Contents/MacOS/Claude\n100 1 /sbin/launchd\n"
+        with mock.patch.object(hook.os, "getppid", return_value=101), mock.patch.object(hook.subprocess, "run", return_value=mock.Mock(stdout=output)):
+            host = hook.host_context({"ITERM_SESSION_ID": "stale"})
+        self.assertEqual(host["host_bundle_id"], "com.anthropic.claudefordesktop")
+        with tempfile.TemporaryDirectory() as root:
+            hook.record({"session_id": "desktop-id", "hook_event_name": "Stop"}, {"ITERM_SESSION_ID": "stale"}, root, host=host)
+            event = json.loads((Path(root) / "desktop-id.json").read_text())
+            self.assertEqual(event["iterm_session_id"], "")
+            self.assertEqual(event["state"], "ready")
+
     def test_unknown_notifications_and_bad_ids_do_not_create_events(self):
         with tempfile.TemporaryDirectory() as root:
             hook.record({"session_id": "../escape", "hook_event_name": "Stop"}, {}, root)
