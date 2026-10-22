@@ -623,7 +623,8 @@ struct ShelfPillView: View {
     }
     private var pillContent: some View {
         VStack(spacing: 9) {
-            PulseLogo().frame(width: 21, height: 15)
+            CometArtwork(mood: store.runningCount > 0 ? .working : store.attentionCount > 0 ? .ready : .idle)
+                .frame(width: 32, height: 32).allowsHitTesting(false)
             VStack(spacing: 3) {
                 Text("\(store.runningCount)").foregroundStyle(Ink.working)
                 Rectangle().fill(.white.opacity(0.14)).frame(width: 12, height: 1)

@@ -8,7 +8,7 @@ let package = Package(
     targets: [
         .systemLibrary(name: "CSQLite"),
         .target(name: "PulseCore", dependencies: ["CSQLite"]),
-        .executableTarget(name: "Pulse", dependencies: ["PulseCore"], resources: [.copy("Resources/Logos")]),
+        .executableTarget(name: "Pulse", dependencies: ["PulseCore"], resources: [.copy("Resources/Logos"), .copy("Resources/Comet")]),
         .testTarget(name: "PulseCoreTests", dependencies: ["PulseCore", "CSQLite"])
     ]
 )

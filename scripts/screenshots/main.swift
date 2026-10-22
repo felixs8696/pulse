@@ -2,7 +2,9 @@ import AppKit
 import SwiftUI
 import PulseCore
 
-extension Notification.Name { static let resetShelf = Notification.Name("resetPulseScreenshot") }
+extension Notification.Name {
+    static let previewReplyBanner = Notification.Name("previewReplyBannerScreenshot")
+ static let resetShelf = Notification.Name("resetPulseScreenshot") }
 
 // Renders the actual app views with fictional data. No scanner, hooks, or personal
 // session storage is used. This entry point exists only in a temporary docs build.
@@ -16,6 +18,7 @@ enum ScreenshotMain {
         let output = URL(fileURLWithPath: CommandLine.arguments[1], isDirectory: true)
         try FileManager.default.createDirectory(at: output, withIntermediateDirectories: true)
         let now = Date()
+        UserDefaults(suiteName: "PulseDocumentationScreenshots")!.removePersistentDomain(forName: "PulseDocumentationScreenshots")
         let store = SessionStore()
         func session(_ provider: Provider, _ id: String, _ title: String, _ prompt: String,
                      _ state: AgentState, minutes: Double, route: SessionRoute? = nil) -> Session {
@@ -52,7 +55,7 @@ enum ScreenshotMain {
     @MainActor
     static func render(_ store: SessionStore, style: Style, to url: URL) throws {
         let size = NSSize(width: style == .overview ? 664 : 500,
-                          height: style == .overview ? 664 : 500)
+                          height: style == .overview ? 728 : 580)
         let pixels = NSSize(width: size.width * 2, height: size.height * 2)
         let view = NSHostingView(rootView: ScreenshotStage(store: store, overview: style == .overview)
             .frame(width: size.width, height: size.height)
@@ -88,7 +91,7 @@ private struct ScreenshotStage: View {
                                     Color(red: 0.81, green: 0.80, blue: 0.89)],
                            startPoint: .topLeading, endPoint: .bottomTrailing)
             ShelfView(store: store, onHover: { _ in }, onDragChange: { _ in nil })
-                .frame(width: 436, height: overview ? 600 : 436)
+                .frame(width: 436, height: overview ? 664 : 516)
                 .shadow(color: .black.opacity(0.17), radius: 16, y: 10)
                 .offset(x: overview ? 76 : 32, y: 32)
             if overview {
