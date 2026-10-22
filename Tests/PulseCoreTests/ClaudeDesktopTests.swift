@@ -25,6 +25,11 @@ struct ClaudeDesktopTests {
         let route = SessionRoute.claude(reports: [["host_bundle_id": "com.googlecode.iterm2"]], entrypoint: nil, cursorWorkspace: nil, desktopSessionID: desktopID)
         #expect(route.kind == .iTerm)
     }
+    @Test func legacyReporterUsesVerifiedDesktopEntrypoint() {
+        let route = SessionRoute.claude(reports: [["host_bundle_id": "com.anthropic.claude-code"]], entrypoint: "claude-desktop", cursorWorkspace: nil, desktopSessionID: desktopID)
+        #expect(route.kind == .claudeDesktop)
+        #expect(route.desktopSessionID == desktopID)
+    }
     @Test func malformedIDsCannotBecomeNavigationLinks() {
         for id in ["last", "local_../../new", "local_valid?session=last", ""] {
             let session = Session(provider: .claude, nativeID: cliID, title: "Example", project: "/tmp", updatedAt: Date(), state: .ready,

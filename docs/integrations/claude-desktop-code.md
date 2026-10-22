@@ -10,4 +10,4 @@ Explicit hook host evidence takes precedence over a saved Desktop mapping, so re
 
 This covers locally indexed Code sessions only. Regular Chat, Cowork, and cloud-only Code sessions are outside this integration.
 
-Validation: fixture tests cover ID mapping, navigation URLs, invalid IDs, archived sessions, stale host mappings, and Desktop hook ancestry. On the development Mac, 16 Desktop metadata records match standard CLI transcripts, but all are older than the rolling week. Desktop remained on its loading screen during verification, so live navigation and completion alerts still need testing.
+Validation: fixture tests cover ID mapping, navigation URLs, invalid IDs, archived sessions, stale host mappings, Desktop hook ancestry, and legacy reporters using the embedded Code bundle ID. A fresh Desktop Code conversation was discovered and displayed in the running AC build with its correct last user message and ready state. Clicking its row dispatches the Desktop continue link. Exact destination navigation and a live completion chime still need visual verification because the automated Desktop view remains on its loading screen.

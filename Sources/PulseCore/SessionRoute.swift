@@ -26,7 +26,13 @@ public struct SessionRoute: Codable, Sendable, Equatable {
             case "com.anthropic.claudefordesktop":
                 return SessionRoute(.claudeDesktop, desktopSessionID: desktopSessionID)
             case "com.googlecode.iterm2": return SessionRoute(.iTerm)
-            default: return SessionRoute(.unknown)
+            default:
+                // Older reporters identify Desktop's embedded Code process rather
+                // than the enclosing app. Require transcript and saved-ID evidence.
+                if entrypoint == "claude-desktop", let desktopSessionID {
+                    return SessionRoute(.claudeDesktop, desktopSessionID: desktopSessionID)
+                }
+                return SessionRoute(.unknown)
             }
         }
         if let desktopSessionID { return SessionRoute(.claudeDesktop, desktopSessionID: desktopSessionID) }
