@@ -63,23 +63,35 @@ Hover over the pill to open your session list. Each row shows your last message.
 2. Drag **Pulse.app** into **Applications** and open it.
 3. Hover the pill to see your sessions. Press **⌃ Space** to show or hide the panel.
 
-Sound and reply banners are on by default. Banners stay until you dismiss them or send another message in that chat. The pill appears on every display, and the panel starts on Pinned. You can change these settings in the app.
+Sound and reply banners are on by default. Banners close after five seconds by default. You can choose a longer duration or keep them open until clicked. The pill appears on every display, and the panel starts on Pinned. You can change these settings in the app.
 
 Pulse is a menu-bar app, so it won't show up in the Dock. You can turn on launch at login from its menu.
 
 > The app is ad-hoc signed and hasn't been notarized by Apple yet. If macOS blocks it, try opening the app, then go to **System Settings → Privacy & Security → Open Anyway**. Only do this for a copy you trust. More details are in the [installation guide](DISTRIBUTION.md).
 
-### Supported apps
+### What works with Pulse
 
-| Agent | Where you use it | Setup |
+These are the setups tested in everyday use so far. The agent is listed first, followed by the app it runs in.
+
+| Agent | Tested in | Setup |
 | :--- | :--- | :--- |
-| Claude Code | iTerm, Cursor's Claude extension, Cursor terminal | Connects automatically. For Cursor, install the included session router too. |
-| Codex | Codex Desktop | No extra setup for chats stored locally. |
-| Cursor agents | Cursor | Install the included `pulse-router.vsix`. |
+| Claude Code | CLI in iTerm | Pulse installs its hooks automatically. Requires Python 3 from Apple's Command Line Tools and permission to control iTerm. |
+| Claude Code | Claude Code extension in Cursor | Automatic Claude hooks, plus the included `pulse-router.vsix` to reopen the right tab. |
+| Codex | Codex Desktop | Local chats are discovered automatically. No extension or hook setup needed. |
 
-Follow the [setup guide](DISTRIBUTION.md#connect-your-apps) to install the Claude hooks and Cursor extension included in the ZIP.
+Other integrations are implemented, but haven't been verified end to end in everyday use:
 
-Pulse tracks conversations active in the past seven days, plus anything you pin. Sending a message in an older chat brings it back. It excludes child agents and background tasks. Claude chat, Cowork, and ChatGPT chat aren't supported. Codex session links open in Codex Desktop. Returning to the original CLI pane isn't supported.
+| Agent | Where | Current limits |
+| :--- | :--- | :--- |
+| Cursor agents | Cursor's own agent chats | Reads local chat data. Install `pulse-router.vsix` to reopen the right chat. |
+| Claude Code | CLI in Cursor's integrated terminal | Uses Claude hooks and `pulse-router.vsix` to return to the recorded terminal. |
+| Codex | CLI | Chats may appear if they're in the local Codex index. Clicking opens Codex Desktop, not the original terminal pane. |
+
+Codex Desktop is the only tested setup that needs no additional connection setup. Claude hooks install automatically when the required Python is available. Cursor navigation needs the bundled extension. See the [connection setup guide](DISTRIBUTION.md#connect-your-apps).
+
+Ordinary ChatGPT chats, Claude chat, Cowork, and the Codex extension in Cursor aren't supported integrations. Cloud-only chats won't appear unless a supported app stores them locally.
+
+Pulse tracks conversations active in the past seven days, plus anything you pin. Sending a message in an older chat brings it back. Child agents and background tasks are excluded.
 
 ## Privacy and limitations
 

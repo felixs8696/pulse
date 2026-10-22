@@ -68,13 +68,13 @@ python3 scripts/setup-cursor.py
 
 It activates on its first link and can install while agents remain running. Claude tabs also require the Claude Code extension. Uninstall **Pulse · Session router** from Cursor's Extensions panel to remove it.
 
-For precise Claude Code states and pane IDs in new sessions:
+Pulse installs and repairs Claude hooks automatically when Python 3 from Apple’s Command Line Tools is available. For manual setup:
 
 ```sh
 python3 scripts/setup-claude.py
 ```
 
-The installer backs up `~/.claude/settings.json`, preserves existing settings and hooks, and merges only Pulse's commands. It is safe to run again. Restart Claude Code sessions after installing. To remove Pulse's hooks:
+The installer backs up `~/.claude/settings.json`, preserves existing settings and hooks, and merges only Pulse's commands. It is safe to run again. Keep current chats open and continue with your next message or tool action. Current Claude Code versions normally reload hooks automatically. If a chat does not connect, check `/hooks`. To remove Pulse's hooks:
 
 ```sh
 python3 scripts/setup-claude.py --remove
