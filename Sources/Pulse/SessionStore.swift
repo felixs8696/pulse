@@ -246,7 +246,7 @@ final class SessionStore: ObservableObject {
     }
     func open(_ s: Session) {
         Task {
-            do { try await SessionLauncher.open(s); markRead(s); presentation.dismiss() }
+            do { try await SessionLauncher.open(s); markRead(s) }
             catch LaunchError.closedTerminal { self.closedTerminals.insert(s.id); self.refresh() }
             catch LaunchError.unavailableDestination { self.closedTerminals.insert(s.id); self.refresh() }
             catch { self.error = error.localizedDescription }
