@@ -60,12 +60,6 @@ final class SessionStore: ObservableObject {
     @Published private(set) var connectingClaude = false
     @Published private(set) var claudeConnectionError: String?
     @Published private(set) var claudeConnectionHint: String?
-    @Published var automaticClaudeSetup: Bool {
-        didSet {
-            defaults.set(automaticClaudeSetup, forKey: "automaticClaudeSetup")
-            if automaticClaudeSetup { checkedClaudeSetup = false; maintainClaudeConnection() }
-        }
-    }
     private var checkedClaudeSetup = false
     @Published var activeSessionActionsID: String?
     @Published var pillOnEveryDisplay: Bool { didSet {
@@ -98,7 +92,6 @@ final class SessionStore: ObservableObject {
 
     init() {
         clickPillToKeepOpen = UserDefaults.standard.bool(forKey: "clickPillToKeepOpen")
-        automaticClaudeSetup = UserDefaults.standard.object(forKey: "automaticClaudeSetup") as? Bool ?? true
         pillOnEveryDisplay = UserDefaults.standard.object(forKey: "pillOnEveryDisplay") as? Bool ?? true
         replyBannersEnabled = UserDefaults.standard.object(forKey: "replyBannersEnabled") as? Bool ?? true
         replyBannerDuration = (UserDefaults.standard.object(forKey: "replyBannerDuration") as? Int)
@@ -142,7 +135,7 @@ final class SessionStore: ObservableObject {
         installClaudeConnection(automatically: false)
     }
     private func maintainClaudeConnection() {
-        guard automaticClaudeSetup, !checkedClaudeSetup, !connectingClaude,
+        guard !checkedClaudeSetup, !connectingClaude,
               FileManager.default.fileExists(atPath: FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".claude").path) else { return }
         checkedClaudeSetup = true
         guard claudeConnection != .disabled else { return }

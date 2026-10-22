@@ -160,7 +160,7 @@ struct ShelfView: View {
         VStack(spacing: 0) {
             header
             if store.showConnections { connections }
-            else if store.needsClaudeConnection { claudeConnectionCard }
+            else if store.claudeConnectionError != nil { claudeConnectionCard }
             search
             filters
             Divider().overlay(Ink.rule).padding(.top, 14)
@@ -263,66 +263,70 @@ struct ShelfView: View {
         }.font(.system(size: 10)).foregroundStyle(Ink.muted).padding(.horizontal, 20).padding(.vertical, 12)
             .overlay(alignment: .top) { Rectangle().fill(Ink.rule).frame(height: 1) }
     }
+    private func connectionStatus(_ source: SourceHealth) -> String {
+        if !store.sources.contains(where: { $0.provider == source.provider }) { return "Checking…" }
+        if source.provider == .claude {
+            if store.connectingClaude { return "Connecting…" }
+            if store.claudeConnectionError != nil || store.claudeConnection == .invalidSettings { return "Needs attention" }
+            if store.claudeConnection == .disabled { return "Disabled" }
+            if source.available && store.claudeConnection != .installed { return "Setup needed" }
+        }
+        return source.available ? "Connected" : "Unavailable"
+    }
+
     private var connections: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(spacing: 0) {
             ForEach(store.orderedSources, id: \.provider) { source in
-                VStack(alignment: .leading, spacing: 4) {
-                HStack {
-                    ProviderLogo(provider: source.provider, size: 14).frame(width: 16)
-                    Text(source.provider.label)
-                    Spacer()
-                    Text(source.available ? "\(source.count) sessions" : "Unavailable").foregroundStyle(source.available ? Ink.muted : Ink.waiting)
-                }.font(.system(size: 11)).help(source.message)
-                    if !source.available { Text(source.message).font(.system(size: 10)).foregroundStyle(Ink.waiting).fixedSize(horizontal: false, vertical: true) }
-                    if source.provider == .claude {
-                        claudeConnectionContent
-                        if store.claudeConnection == .installed {
-                            Button("Repair connection") { store.connectClaude() }
-                                .disabled(store.connectingClaude)
-                        }
-                        Toggle("Connect automatically", isOn: $store.automaticClaudeSetup)
-                    } else {
-                        Text(source.provider == .codex
-                             ? "Reads local Codex chats. No hooks or Python setup needed."
-                             : "Reads local Cursor chats. Install the bundled Cursor bridge to open exact chats and panes.")
-                            .font(.system(size: 10)).foregroundStyle(Ink.muted)
-                    }
-                }.padding(.vertical, 4)
-            }
-            if let status = store.diagnosticExportStatus {
-                Text(status).font(.system(size: 10)).foregroundStyle(Ink.muted)
-            }
-        }.padding(12).background(.white.opacity(0.04), in: RoundedRectangle(cornerRadius: 10)).padding(.horizontal, 18).padding(.bottom, 12)
-    }
-    private var claudeConnectionCard: some View {
-        claudeConnectionContent.padding(12)
-            .background(.white.opacity(0.04), in: RoundedRectangle(cornerRadius: 10))
-            .padding(.horizontal, 18).padding(.bottom, 12)
-    }
-    private var claudeConnectionContent: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            if store.claudeConnection == .installed && store.claudeConnectionError == nil {
-                Text(store.claudeConnectionHint ?? "Claude hooks installed. Keep using your current chats to connect their live panes.")
-                    .font(.system(size: 11)).foregroundStyle(Ink.muted)
-            } else if store.claudeConnection == .disabled {
-                Text("Claude hooks are disabled in your Claude settings. Enable them in Claude to connect your live chats.")
-                    .font(.system(size: 11)).foregroundStyle(Ink.muted)
-            } else {
                 HStack(spacing: 8) {
-                    Text("Connect your Claude chats").font(.system(size: 12, weight: .medium))
-                    Spacer(minLength: 4)
-                    Button(store.connectingClaude ? "Connecting…" : "Connect Claude Code") { store.connectClaude() }
-                        .font(.system(size: 11, weight: .medium))
-                        .buttonStyle(.bordered).tint(Ink.accent).disabled(store.connectingClaude)
-                }
-                Text("Adds local hooks for live panes and reply alerts. Backs up your Claude settings and keeps existing hooks. Your chats stay open.")
-                    .font(.system(size: 10)).foregroundStyle(Ink.muted)
+                    ProviderLogo(provider: source.provider, size: 13).frame(width: 16)
+                    Text(source.provider.label).font(.system(size: 11, weight: .medium))
+                    Spacer(minLength: 8)
+                    Text(source.available ? "\(source.count) chats" : "—")
+                        .font(.system(size: 10, design: .monospaced)).monospacedDigit()
+                        .foregroundStyle(Ink.muted).frame(width: 58, alignment: .trailing)
+                    Text(connectionStatus(source))
+                        .font(.system(size: 10)).foregroundStyle(Ink.muted)
+                        .frame(width: 86, alignment: .trailing)
+                    Menu {
+                        Text(source.message)
+                        if source.provider == .claude {
+                            if let error = store.claudeConnectionError { Text(error) }
+                            Button("Repair connection") { store.connectClaude() }
+                                .disabled(store.connectingClaude || store.claudeConnection == .disabled)
+                        }
+                        if source.provider == .cursor {
+                            Text("Exact-chat navigation uses the bundled Cursor bridge.")
+                        }
+                        Button("Check again") { store.refresh() }
+                        Button("Export diagnostics…") { store.exportDiagnostics() }
+                            .disabled(store.exportingDiagnostics)
+                    } label: {
+                        Image(systemName: "ellipsis").font(.system(size: 11))
+                            .foregroundStyle(Ink.muted).frame(width: 22, height: 26)
+                    }
+                    .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize()
+                    .accessibilityLabel("Troubleshoot \(source.provider.label)")
+                }.frame(height: 28)
             }
-            if let error = store.claudeConnectionError {
-                Text(error).font(.system(size: 10)).foregroundStyle(Ink.waiting)
-            }
-        }.fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(.horizontal, 10).padding(.vertical, 4)
+        .background(.white.opacity(0.025), in: RoundedRectangle(cornerRadius: 9))
+        .padding(.horizontal, 18).padding(.bottom, 10)
     }
+
+    private var claudeConnectionCard: some View {
+        Button { store.showConnections = true } label: {
+            HStack(spacing: 7) {
+                Image(systemName: "info.circle")
+                Text("Connection needs attention")
+                Spacer()
+                Image(systemName: "chevron.right").font(.system(size: 9))
+            }.font(.system(size: 10)).foregroundStyle(Ink.muted)
+                .padding(.horizontal, 12).padding(.vertical, 7)
+                .background(.white.opacity(0.025), in: RoundedRectangle(cornerRadius: 8))
+        }.buttonStyle(.plain).padding(.horizontal, 18).padding(.bottom, 10)
+    }
+
 }
 
 private struct ShelfSessionList: View {
