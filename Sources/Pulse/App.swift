@@ -400,8 +400,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
     private func createMenu() {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-        if let image = BrandArtwork.image("pulse-mark")?.copy() as? NSImage {
-            image.size = NSSize(width: 22, height: 15)
+        if let image = CometPoseAtlas.image(.ready).copy() as? NSImage {
+            image.size = NSSize(width: 20, height: 20)
             statusItem.button?.image = image
         }
         statusItem.button?.toolTip = "Pulse"

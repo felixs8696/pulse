@@ -36,7 +36,7 @@ struct CometArtwork: View {
 }
 
 @MainActor
-private enum CometPoseAtlas {
+enum CometPoseAtlas {
     static let poses: [NSImage] = {
         guard let url = Bundle.module.url(forResource: "comet-poses", withExtension: "png", subdirectory: "Comet"),
               let atlas = NSImage(contentsOf: url) else { return [] }

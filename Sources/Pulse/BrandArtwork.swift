@@ -1,7 +1,7 @@
 import AppKit
 import SwiftUI
 
-/// Bundled provider artwork and the app's original waveform mark.
+/// Bundled provider artwork.
 enum BrandArtwork {
     private static let resources: Bundle = {
         if let url = Bundle.main.url(forResource: "Pulse_Pulse", withExtension: "bundle"),
@@ -10,7 +10,7 @@ enum BrandArtwork {
     }()
     private static let images: [String: NSImage] = {
         var result: [String: NSImage] = [:]
-        for name in ["claude", "cursor-light", "cursor-dark", "openai-light", "openai-dark", "pulse-mark"] {
+        for name in ["claude", "cursor-light", "cursor-dark", "openai-light", "openai-dark"] {
             if let url = resources.url(forResource: name, withExtension: "svg", subdirectory: "Logos"),
                let image = NSImage(contentsOf: url) {
                 image.isTemplate = false
@@ -28,9 +28,8 @@ enum BrandArtwork {
 
 struct PulseLogo: View {
     var body: some View {
-        if let image = BrandArtwork.image("pulse-mark") {
-            Image(nsImage: image).resizable().renderingMode(.original).scaledToFit()
-                .accessibilityLabel("Pulse")
-        }
+        Image(nsImage: CometPoseAtlas.image(.ready))
+            .resizable().renderingMode(.original).interpolation(.high).scaledToFit()
+            .accessibilityLabel("Pulse")
     }
 }

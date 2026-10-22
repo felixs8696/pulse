@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="Sources/Pulse/Resources/Logos/pulse-mark.svg" width="64" height="48" alt="Pulse waveform">
+  <img src="docs/images/pulse-logo.png" width="80" height="80" alt="Pulse mascot">
 </p>
 
 <h1 align="center">Pulse</h1>

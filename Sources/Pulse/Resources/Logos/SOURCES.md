@@ -10,4 +10,4 @@ SVG intrinsic dimensions are normalized for native rendering; path geometry is u
 
 ## Pulse mark
 
-`pulse-mark.svg` is an original waveform mark created for this app. The app uses native macOS system fonts; no custom fonts are bundled.
+The blue comet mascot is generated artwork created for Pulse. Its three poses are bundled in `../Comet/comet-poses.png`. The thumbs-up pose is used for the app icon and logo. The app uses native macOS system fonts; no custom fonts are bundled.

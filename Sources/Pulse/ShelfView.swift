@@ -191,7 +191,7 @@ struct ShelfView: View {
     private var header: some View {
         HStack(alignment: .center, spacing: 12) {
             HStack(spacing: 12) {
-                PulseLogo().frame(width: 28, height: 21)
+                PulseLogo().frame(width: 32, height: 32)
                 Text("Pulse").font(BrandArtwork.titleFont(size: 21))
                     .tracking(-0.4).foregroundStyle(Ink.muted).fixedSize()
                 Spacer()
