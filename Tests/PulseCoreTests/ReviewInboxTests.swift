@@ -3,6 +3,26 @@ import Testing
 @testable import PulseCore
 
 struct ReviewInboxTests {
+    @Test func readRepliesSortBelowUnreadByRecencyAndNewReplyReturnsToUnread() {
+        var inbox = ReviewInbox()
+        let olderUnread = session("a", time: 100)
+        let newerRead = session("b", time: 300)
+        let newerUnread = session("c", time: 200)
+        inbox.markHandled(newerRead)
+        #expect(inbox.sorted([newerRead, olderUnread, newerUnread]).map(\.nativeID) == ["c", "a", "b"])
+        #expect(!inbox.isRead(session("b", time: 400)))
+    }
+    @Test func respondingCountsAsReadButNextReplyIsUnread() {
+        let inbox = ReviewInbox()
+        var reply = session(time: 100)
+        reply.lastUserMessageAt = Date(timeIntervalSince1970: 200)
+        #expect(inbox.isRead(reply))
+        #expect(!inbox.needsReview(reply))
+        reply.updatedAt = Date(timeIntervalSince1970: 300)
+        #expect(!inbox.isRead(reply))
+        #expect(inbox.isRead(session(state: .running)))
+    }
+
     func session(_ id: String = "example", state: AgentState = .ready, time: Double = 100) -> Session {
         Session(provider: .claude, nativeID: id, title: id, project: "/tmp", updatedAt: Date(timeIntervalSince1970: time), state: state)
     }

@@ -338,15 +338,6 @@ private struct ShelfSessionList: View {
                     let phase = timeline.date.timeIntervalSinceReferenceDate / 2.6 * 2 * Double.pi
                     let brightness = animateWorking ? 0.38 + 0.62 * (0.5 + 0.5 * cos(phase)) : 1
                     LazyVStack(alignment: .leading, spacing: 3) {
-                        if store.filter == .attention && !sessions.isEmpty {
-                            HStack {
-                                Text("Unread replies from today").foregroundStyle(Ink.muted)
-                                Spacer()
-                                Button("Mark all read") { store.markDisplayedRead() }
-                                    .foregroundStyle(Ink.accent).buttonStyle(.plain)
-                                    .help("Mark only the replies matching this list read")
-                            }.font(.system(size: 10)).padding(.horizontal, 10).padding(.top, 14)
-                        }
                         if store.filter == .attention && store.hasScope {
                             VStack(alignment: .leading, spacing: 6) {
                                 Text("\(store.matchingAttentionCount) matching · \(store.attentionCount) total today")
@@ -357,6 +348,14 @@ private struct ShelfSessionList: View {
                         }
                         if !sessions.isEmpty {
                             ForEach(sessions) { session in
+                                if store.filter != .running,
+                                   session.id == sessions.first?.id ||
+                                    (store.isRead(session) && session.id == sessions.first(where: { store.isRead($0) })?.id) {
+                                    Text(store.isRead(session) ? "Read" : "Unread")
+                                        .font(.system(size: 10, weight: .medium))
+                                        .foregroundStyle(Ink.muted)
+                                        .padding(.horizontal, 10).padding(.top, 12).padding(.bottom, 3)
+                                }
                                 SessionRow(session: session, store: store, workingBrightness: brightness)
                                     // Animate the whole row outside its content transaction,
                                     // keeping the icon pulse from animating text or controls.
@@ -434,7 +433,8 @@ private struct SessionRow: View {
                     VStack(alignment: .leading, spacing: 5) {
                         HStack(alignment: .firstTextBaseline, spacing: 10) {
                             Text(session.title)
-                                .font(.system(size: 12, weight: .semibold))
+                                .font(.system(size: 12, weight: store.isRead(session) ? .regular : .semibold))
+                                .opacity(store.isRead(session) && session.state != .running ? 0.72 : 1)
                                 .lineLimit(2).multilineTextAlignment(.leading)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                             TimelineView(.periodic(from: .now, by: 30)) { context in
@@ -444,6 +444,7 @@ private struct SessionRow: View {
                         }
                         Text(session.lastUserMessage ?? "No user message available")
                             .font(.system(size: 11)).foregroundStyle(Ink.muted)
+                            .opacity(store.isRead(session) && session.state != .running ? 0.75 : 1)
                             .lineLimit(2).multilineTextAlignment(.leading)
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }

@@ -196,12 +196,12 @@ final class SessionStore: ObservableObject {
             switch filter {
             case .all: return SessionScope.isToday(session) || session.state == .running
             case .pinned: return pins.contains(session.id)
-            case .attention: return needsAttention(session)
+            case .attention: return SessionScope.isToday(session) && session.state.needsAttention && session.replayedAt == nil
             case .running: return session.state == .running
             case .older: return SessionScope.isOlder(session)
             }
         }
-        return filter == .running ? Session.sortedByLastUserMessage(matches) : Session.sorted(matches, pins: [])
+        return filter == .running ? Session.sortedByLastUserMessage(matches) : reviewInbox.sorted(matches)
     }
     func showAllNeedsYou() { query = ""; provider = nil; filter = .attention }
     func toggleSounds() {
@@ -246,7 +246,7 @@ final class SessionStore: ObservableObject {
     }
     func open(_ s: Session) {
         Task {
-            do { try await SessionLauncher.open(s); presentation.dismiss() }
+            do { try await SessionLauncher.open(s); markRead(s); presentation.dismiss() }
             catch LaunchError.closedTerminal { self.closedTerminals.insert(s.id); self.refresh() }
             catch LaunchError.unavailableDestination { self.closedTerminals.insert(s.id); self.refresh() }
             catch { self.error = error.localizedDescription }

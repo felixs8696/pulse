@@ -1,7 +1,7 @@
 import Foundation
 
 /// An outstanding reply stays outstanding until another turn starts or the user handles it.
-/// Opening the source app, restarting Shelf, and the age of the reply do not acknowledge it.
+/// Opening a chat through Pulse acknowledges its current reply. New replies become unread.
 public struct ReviewInbox: Codable, Sendable {
     private struct Event: Codable, Equatable, Sendable {
         let state: AgentState
@@ -12,10 +12,19 @@ public struct ReviewInbox: Codable, Sendable {
     public init() {}
 
     public func needsReview(_ session: Session) -> Bool {
-        !session.isSubagent && session.replayedAt == nil && session.state.needsAttention && handled[session.id] != Event(session)
+        !session.isSubagent && session.replayedAt == nil && session.state.needsAttention && !isRead(session)
     }
     public func isRead(_ session: Session) -> Bool {
-        !session.isSubagent && session.state.needsAttention && handled[session.id] == Event(session)
+        !session.isSubagent && (!session.state.needsAttention || session.replayedAt != nil
+            || (session.lastUserMessageAt.map { $0 > session.updatedAt } ?? false)
+            || handled[session.id] == Event(session))
+    }
+    public func sorted(_ sessions: [Session]) -> [Session] {
+        sessions.sorted {
+            if isRead($0) != isRead($1) { return !isRead($0) }
+            if $0.updatedAt != $1.updatedAt { return $0.updatedAt > $1.updatedAt }
+            return $0.id < $1.id
+        }
     }
     public mutating func markHandled(_ session: Session) {
         guard !session.isSubagent, session.state.needsAttention else { return }

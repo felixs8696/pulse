@@ -30,7 +30,7 @@ Hover over the pill to open your session list. Each row shows your last message.
 - Drag the pill or the panel's title area to move them together.
 - Open a row's three-dot menu to pin it, mark a reply read or unread, or change its completion tone.
 - Search by message, title, or project.
-- Mark replies read when you've dealt with them. You can mark them unread again, and opening a session doesn't clear it.
+- Opening a chat marks its current reply read. Unread replies stay above read ones, with each group sorted by recency. You can mark a reply unread again from its menu.
 - Mute sounds from the panel or menu bar.
 - A pill appears on each connected monitor by default. Turn off **Show pill on every display** in the top-right menu if you prefer a single pill.
 
@@ -47,7 +47,7 @@ Hover over the pill to open your session list. Each row shows your last message.
     <td width="50%" valign="top">
       <img src="docs/images/waiting.png" alt="Waiting tab with two completed example replies and explicit mark-read controls.">
       <strong>Waiting</strong><br>
-      Today's replies you haven't marked read, plus requests for input. Previous days' replies move to Older.
+      Today's replies and requests for input, grouped into unread and read. Previous days' replies move to Older.
     </td>
     <td width="50%" valign="top">
       <img src="docs/images/pinned.png" alt="Pinned tab keeping two example conversations close, with their current status visible.">
