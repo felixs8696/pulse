@@ -55,6 +55,10 @@ private struct SessionLogo: View {
         session.provider == .claude && (session.route?.kind == .cursorClaude || session.route?.kind == .cursorTerminal)
     }
 
+    private var isClaudeCLI: Bool {
+        session.provider == .claude && session.route?.kind == .iTerm
+    }
+
     var body: some View {
         ProviderLogo(provider: isClaudeInCursor ? .cursor : session.provider)
             .frame(width: 30, height: 30)
@@ -66,11 +70,19 @@ private struct SessionLogo: View {
                         .background(Ink.raised, in: Circle())
                         .overlay(Circle().strokeBorder(Ink.rule, lineWidth: 0.7))
                         .offset(x: 3, y: 3)
+                } else if isClaudeCLI {
+                    Image(systemName: "terminal.fill")
+                        .font(.system(size: 9, weight: .medium))
+                        .foregroundStyle(Ink.text)
+                        .frame(width: 15, height: 15)
+                        .background(Ink.raised, in: Circle())
+                        .overlay(Circle().strokeBorder(Ink.rule, lineWidth: 0.7))
+                        .offset(x: 3, y: 3)
                 }
             }
             .opacity(session.state == .running ? workingBrightness : 1)
             .accessibilityElement(children: .ignore)
-            .accessibilityLabel(isClaudeInCursor ? "Claude Code in Cursor" : (session.provider == .codex ? "OpenAI" : session.provider.label))
+            .accessibilityLabel(isClaudeInCursor ? "Claude Code in Cursor" : (isClaudeCLI ? "Claude Code in iTerm" : session.hostLabel))
     }
 }
 extension AgentState {

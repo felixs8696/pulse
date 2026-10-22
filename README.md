@@ -83,11 +83,14 @@ Other integrations are implemented, but haven't been verified end to end in ever
 
 | Agent | Where | Current limits |
 | :--- | :--- | :--- |
+| Claude Code | Claude Desktop’s Code tab | Local sessions are discovered automatically. Verified discovery and reply previews on a live chat. Exact-chat navigation and completion chimes still need end-to-end verification. |
 | Cursor agents | Cursor's own agent chats | Reads local chat data. Install `pulse-router.vsix` to reopen the right chat. |
 | Claude Code | CLI in Cursor's integrated terminal | Uses Claude hooks and `pulse-router.vsix` to return to the recorded terminal. |
 | Codex | CLI | Chats may appear if they're in the local Codex index. Clicking opens Codex Desktop, not the original terminal pane. |
 
-Codex Desktop is the only tested setup that needs no additional connection setup. Claude hooks install automatically when the required Python is available. Cursor navigation needs the bundled extension. See the [connection setup guide](DISTRIBUTION.md#connect-your-apps).
+Claude CLI sessions have a small terminal badge on their logo. Claude in Cursor keeps the Cursor logo with a Claude badge, and Desktop Code uses the Claude logo.
+
+Codex Desktop is the only fully tested setup that needs no additional connection setup. Claude hooks install automatically when the required Python is available. Cursor navigation needs the bundled extension. See the [connection setup guide](DISTRIBUTION.md#connect-your-apps).
 
 Ordinary ChatGPT chats, Claude chat, Cowork, and the Codex extension in Cursor aren't supported integrations. Cloud-only chats won't appear unless a supported app stores them locally.
 
