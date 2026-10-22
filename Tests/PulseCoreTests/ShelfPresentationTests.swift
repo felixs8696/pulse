@@ -2,61 +2,45 @@ import Testing
 @testable import PulseCore
 
 struct ShelfPresentationTests {
-    @Test func firstClickHoldsPreviewThroughPointerExitAndSecondClickCloses() {
+    @Test func repeatedClicksNeverPinPreview() {
         var panel = ShelfPresentation()
-        panel.pointerChanged(inside: true)
-        panel.applyHover(inside: true)
-        #expect(panel.expanded && !panel.heldOpen)
-        panel.clickPill()
-        panel.pointerChanged(inside: false)
-        panel.applyHover(inside: false)
-        #expect(panel.expanded && panel.heldOpen)
-        panel.pointerChanged(inside: true)
         panel.applyHover(inside: true)
         panel.clickPill()
-        #expect(!panel.expanded && !panel.heldOpen)
-        // Exit/enter events from the disappearing shelf must not reopen under the pill.
-        panel.pointerChanged(inside: true)
-        panel.applyHover(inside: true)
-        #expect(!panel.expanded)
-    }
-
-    @Test func hoverRearmsOnlyAfterLeavingAndReturning() {
-        var panel = ShelfPresentation()
         panel.clickPill()
-        panel.clickPill()
-        panel.applyHover(inside: true)
-        #expect(!panel.expanded)
-        panel.pointerChanged(inside: false)
-        panel.applyHover(inside: false)
-        panel.pointerChanged(inside: true)
-        panel.applyHover(inside: true)
-        #expect(panel.expanded && !panel.heldOpen)
+        #expect(panel.expanded)
         panel.pointerChanged(inside: false)
         panel.applyHover(inside: false)
         #expect(!panel.expanded)
     }
 
-    @Test func fastClickBeforeHoverDelayStillHoldsOpen() {
+    @Test func fastClickCollapsesOnExit() {
         var panel = ShelfPresentation()
         panel.clickPill()
-        panel.applyHover(inside: true)
+        #expect(panel.expanded)
         panel.applyHover(inside: false)
-        #expect(panel.expanded && panel.heldOpen)
-        panel.clickPill()
-        panel.clickPill()
-        #expect(panel.expanded && panel.heldOpen)
+        #expect(!panel.expanded)
     }
 
-    @Test func escapeClearsHoldAndShortcutTogglesVisibility() {
+    @Test func escapeSuppressesHoverUntilPointerReturns() {
         var panel = ShelfPresentation()
-        panel.holdOpen()
+        panel.show()
         panel.dismiss()
         panel.applyHover(inside: true)
-        #expect(!panel.expanded && !panel.heldOpen)
+        #expect(!panel.expanded)
+        panel.pointerChanged(inside: false)
+        panel.pointerChanged(inside: true)
+        panel.applyHover(inside: true)
+        #expect(panel.expanded)
+    }
+
+    @Test func shortcutShowsTemporarilyAndTogglesClosed() {
+        var panel = ShelfPresentation()
         panel.toggleVisibility()
-        #expect(panel.expanded && panel.heldOpen)
+        #expect(panel.expanded)
+        panel.applyHover(inside: false)
+        #expect(!panel.expanded)
         panel.toggleVisibility()
-        #expect(!panel.expanded && !panel.heldOpen)
+        panel.toggleVisibility()
+        #expect(!panel.expanded)
     }
 }

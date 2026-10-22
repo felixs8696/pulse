@@ -164,7 +164,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
                 let changed = self.activatePill(window)
                 guard self.panel === window else { return }
                 if changed && self.store.expanded {
-                    self.store.presentation.holdOpen()
+                    self.store.presentation.show()
                     self.shelfPanel.makeKey()
                 } else { self.togglePill() }
             },
@@ -242,7 +242,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         }
         replyBanners.enqueue(sessions, placements: placements, duration: store.replyBannerDuration, preview: preview) { [weak self] session in
             guard let self else { return }
-            if session.nativeID.hasPrefix("banner-preview") { self.store.presentation.holdOpen() }
+            if session.nativeID.hasPrefix("banner-preview") { self.store.presentation.show() }
             else { self.store.open(session) }
         }
     }
@@ -454,7 +454,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         panel.orderFrontRegardless()
         if store.expanded { shelfPanel.makeKey() }
     }
-    @objc private func connections() { store.showConnections = true; store.presentation.holdOpen(); shelfPanel.makeKeyAndOrderFront(nil) }
+    @objc private func connections() { store.showConnections = true; store.presentation.show(); shelfPanel.makeKeyAndOrderFront(nil) }
     @objc private func quit() { NSApplication.shared.terminate(nil) }
     @objc private func toggleSounds(_ item: NSMenuItem) {
         store.toggleSounds()
@@ -465,7 +465,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             if SMAppService.mainApp.status == .enabled { try SMAppService.mainApp.unregister() }
             else { try SMAppService.mainApp.register() }
             item.state = SMAppService.mainApp.status == .enabled ? .on : .off
-        } catch { store.error = "Launch at login: \(error.localizedDescription)"; store.presentation.holdOpen() }
+        } catch { store.error = "Launch at login: \(error.localizedDescription)"; store.presentation.show() }
     }
     private func registerHotKey() {
         let handler: EventHandlerUPP = { _, _, context in

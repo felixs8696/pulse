@@ -199,7 +199,7 @@ struct ShelfView: View {
             .overlay(DragHandle(onClick: {}, onDragChange: onDragChange))
             SoundToggleButton(store: store)
             Menu {
-                Button(store.showConnections ? "Hide connections" : "Connections & setup") { store.showConnections.toggle(); store.presentation.holdOpen() }
+                Button(store.showConnections ? "Hide connections" : "Connections & setup") { store.showConnections.toggle(); store.presentation.show() }
                 Button(store.claudeConnection == .installed ? "Repair Claude connection" : "Connect Claude Code") { store.connectClaude() }
                     .disabled(store.connectingClaude || store.claudeConnection == .disabled)
                 Toggle("Automatically connect Claude Code", isOn: $store.automaticClaudeSetup)
@@ -588,10 +588,10 @@ struct ShelfPillView: View {
     var body: some View {
         pillContent
             .contentShape(Capsule())
-            .help("\(store.runningCount) working · \(store.attentionCount) waiting today. Hover to preview; click to \(store.heldOpen ? "close" : "keep open"); drag to move.")
+            .help("\(store.runningCount) working · \(store.attentionCount) waiting today. Hover to open; move away to collapse; drag to move.")
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("Pulse. \(store.runningCount) working, \(store.attentionCount) waiting today")
-            .accessibilityValue(store.heldOpen ? "Kept open" : store.expanded ? "Hover preview" : "Collapsed")
+            .accessibilityValue(store.expanded ? "Hover preview" : "Collapsed")
             .accessibilityAddTraits(.isButton)
             .accessibilityAction { onClick() }
             .overlay(DragHandle(onClick: onClick, onDragChange: onDragChange))

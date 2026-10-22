@@ -26,7 +26,7 @@
 
 Hover over the pill to open your session list. Each row shows your last message. Click a row to return to that session in its original app.
 
-- Click the pill to keep the panel open. Click again to collapse it, or press **⌃ Space** to show or hide it.
+- Hover over the pill to open the panel. Move away to collapse it. **⌃ Space** also shows or hides it.
 - Drag the pill or the panel's title area to move them together.
 - Open a row's three-dot menu to pin it, mark a reply read or unread, or change its completion tone.
 - Search by message, title, or project.

@@ -16,7 +16,6 @@ final class SessionStore: ObservableObject {
     @Published var error: String?
     @Published var presentation = ShelfPresentation()
     var expanded: Bool { presentation.expanded }
-    var heldOpen: Bool { presentation.heldOpen }
     @Published var showConnections = false
     @Published private(set) var claudeConnection = ClaudeConnection.inspect()
     @Published private(set) var connectingClaude = false
@@ -63,7 +62,7 @@ final class SessionStore: ObservableObject {
         pillOnEveryDisplay = UserDefaults.standard.object(forKey: "pillOnEveryDisplay") as? Bool ?? true
         replyBannersEnabled = UserDefaults.standard.object(forKey: "replyBannersEnabled") as? Bool ?? true
         replyBannerDuration = (UserDefaults.standard.object(forKey: "replyBannerDuration") as? Int)
-            .flatMap(ReplyBannerDuration.init(rawValue:)) ?? .untilClicked
+            .flatMap(ReplyBannerDuration.init(rawValue:)) ?? .fiveSeconds
         soundsEnabled = UserDefaults.standard.object(forKey: "attentionSoundsEnabled") as? Bool ?? true
         pins = Set(UserDefaults.standard.stringArray(forKey: "pins") ?? [])
         sessionTones = UserDefaults.standard.data(forKey: "sessionTonesV1")
@@ -121,7 +120,7 @@ final class SessionStore: ObservableObject {
         guard !connectingClaude, claudeConnection != .disabled else { return }
         connectingClaude = true
         claudeConnectionError = nil
-        if !automatically { presentation.holdOpen(); showConnections = true }
+        if !automatically { presentation.show(); showConnections = true }
         Task {
             defer { connectingClaude = false }
             do {
@@ -242,7 +241,7 @@ final class SessionStore: ObservableObject {
     }
     func open(_ s: Session) {
         Task {
-            do { try await SessionLauncher.open(s); if !heldOpen { presentation.dismiss() } }
+            do { try await SessionLauncher.open(s); presentation.dismiss() }
             catch LaunchError.closedTerminal { self.closedTerminals.insert(s.id); self.refresh() }
             catch LaunchError.unavailableDestination { self.closedTerminals.insert(s.id); self.refresh() }
             catch { self.error = error.localizedDescription }

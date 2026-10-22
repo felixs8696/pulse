@@ -1,31 +1,29 @@
-/// Hover previews are temporary; only explicit actions hold the panel open.
+/// The panel stays visible only until the pointer leaves its hover area.
 public struct ShelfPresentation: Equatable, Sendable {
-    private enum Mode: Equatable, Sendable { case closed, preview, held }
+    private enum Mode: Equatable, Sendable { case closed, preview }
     private var mode: Mode = .closed
     private var suppressHover = false
 
     public init() {}
     public var expanded: Bool { mode != .closed }
-    public var heldOpen: Bool { mode == .held }
 
     /// Re-arm hover as soon as the pointer leaves both surfaces.
     public mutating func pointerChanged(inside: Bool) {
         if !inside { suppressHover = false }
     }
 
-    /// Called after the hover delay. A pending exit can never close a held panel.
+    /// Called after the hover delay, including after explicit show actions.
     public mutating func applyHover(inside: Bool) {
-        guard mode != .held else { return }
         if !inside { mode = .closed }
         else if !suppressHover { mode = .preview }
     }
 
     public mutating func clickPill() {
-        if heldOpen { dismiss() } else { holdOpen() }
+        show()
     }
 
-    public mutating func holdOpen() {
-        mode = .held
+    public mutating func show() {
+        mode = .preview
         suppressHover = false
     }
 
@@ -36,6 +34,6 @@ public struct ShelfPresentation: Equatable, Sendable {
     }
 
     public mutating func toggleVisibility() {
-        if expanded { dismiss() } else { holdOpen() }
+        if expanded { dismiss() } else { show() }
     }
 }
