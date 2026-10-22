@@ -1,7 +1,6 @@
 import AppKit
 import SwiftUI
 import Combine
-import UniformTypeIdentifiers
 import PulseCore
 
 @MainActor
@@ -33,29 +32,27 @@ final class SessionStore: ObservableObject {
 
     func exportDiagnostics() {
         guard !exportingDiagnostics else { return }
-        let panel = NSSavePanel()
-        panel.allowedContentTypes = [.plainText]
-        panel.nameFieldStringValue = "Pulse-diagnostics.txt"
-        panel.directoryURL = FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first
-        panel.message = "Share this report for debugging. It excludes chat content, session IDs, credentials, and local paths."
-        panel.canCreateDirectories = true
-        panel.begin { [weak self] result in
-            guard result == .OK, let url = panel.url, let self else { return }
-            self.exportingDiagnostics = true
-            self.diagnosticExportStatus = "Checking connections…"
-            Task { @MainActor in
-                let report = await Task.detached(priority: .userInitiated) { ScanDiagnostics.report() }.value
-                do {
-                    try report.write(to: url, atomically: true, encoding: .utf8)
-                    self.diagnosticExportStatus = "Diagnostic report saved."
-                    NSWorkspace.shared.activateFileViewerSelecting([url])
-                } catch {
-                    self.diagnosticExportStatus = "Couldn’t save the report. Try another folder."
-                }
-                self.exportingDiagnostics = false
+        exportingDiagnostics = true
+        diagnosticExportStatus = "Checking connections…"
+        Task { @MainActor in
+            defer { exportingDiagnostics = false }
+            let report = await Task.detached(priority: .userInitiated) { ScanDiagnostics.report() }.value
+            do {
+                let downloads = try FileManager.default.url(for: .downloadsDirectory, in: .userDomainMask,
+                                                            appropriateFor: nil, create: true)
+                let timestamp = ISO8601DateFormatter().string(from: Date()).replacingOccurrences(of: ":", with: "-")
+                let filename = "Pulse-diagnostics-\(timestamp)-\(UUID().uuidString.prefix(8)).txt"
+                let url = downloads.appendingPathComponent(filename)
+                try report.write(to: url, atomically: true, encoding: .utf8)
+                diagnosticExportStatus = "Diagnostic report saved to Downloads."
+                NSWorkspace.shared.activateFileViewerSelecting([url])
+            } catch {
+                diagnosticExportStatus = "Couldn’t save the report to Downloads."
+                self.error = "Couldn’t save diagnostics. Check that Pulse can access your Downloads folder, then try again."
             }
         }
     }
+
     @Published private(set) var claudeConnection = ClaudeConnection.inspect()
     @Published private(set) var connectingClaude = false
     @Published private(set) var claudeConnectionError: String?

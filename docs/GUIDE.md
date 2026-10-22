@@ -149,6 +149,6 @@ The same banner appears on every connected display and across Spaces. Clicking o
 
 ## Diagnostic reports
 
-Choose **Export diagnostics…** from the top-right menu to save a text report you can share for troubleshooting. It includes app and macOS versions, architecture, running-app checks, Claude setup status, scan timings, session counts, and route counts. It excludes conversation text, titles, session IDs, local paths, credentials, and raw logs. Exporting does not upload anything or change connections.
+Choose **Export diagnostics** from the top-right menu. Pulse saves a uniquely named text report directly to Downloads and reveals it in Finder. You can share that file for troubleshooting. It includes app and macOS versions, architecture, running-app checks, Claude setup status, scan timings, session counts, and route counts. It excludes conversation text, titles, session IDs, local paths, credentials, and raw logs. Exporting does not upload anything or change connections.
 
 Provider-specific setup and repair controls are under **Connections & setup**. Providers stay in a fixed order while their scans complete.

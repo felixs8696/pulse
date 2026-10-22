@@ -200,7 +200,7 @@ struct ShelfView: View {
             SoundToggleButton(store: store)
             Menu {
                 Button(store.showConnections ? "Hide connections" : "Connections & setup") { store.showConnections.toggle(); store.presentation.show() }
-                Button(store.exportingDiagnostics ? "Exporting diagnostics…" : "Export diagnostics…") { store.exportDiagnostics() }
+                Button(store.exportingDiagnostics ? "Exporting diagnostics…" : "Export diagnostics") { store.exportDiagnostics() }
                     .disabled(store.exportingDiagnostics)
                 Button("Mark displayed replies read") { store.markDisplayedRead() }
                 Button("Refresh now") { store.refresh() }
@@ -298,7 +298,7 @@ struct ShelfView: View {
                             Text("Exact-chat navigation uses the bundled Cursor bridge.")
                         }
                         Button("Check again") { store.refresh() }
-                        Button("Export diagnostics…") { store.exportDiagnostics() }
+                        Button("Export diagnostics") { store.exportDiagnostics() }
                             .disabled(store.exportingDiagnostics)
                     } label: {
                         Image(systemName: "ellipsis").font(.system(size: 11))
