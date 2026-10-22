@@ -14,7 +14,7 @@ The app discovers sessions belonging to the person running it. This download con
 
 **Cursor:** in Cursor's Extensions panel, open the **…** menu → **Install from VSIX…** and choose the included `pulse-router.vsix`. This enables opening the exact chat or Claude tab. The Claude Code extension must also be installed for Claude tabs.
 
-**Claude Code:** Pulse automatically connects Claude Code when it detects your local Claude folder. It installs missing hooks, checks them again on launch, and refreshes the installed hook when a new Pulse version ships. Claude settings are backed up and existing hooks are preserved. Keep chats open and continue with your next message or tool action. Current Claude Code versions normally reload the settings automatically. If a chat does not appear, check `/hooks` in that chat. Hooks explicitly disabled in Claude settings are respected, and invalid settings are left unchanged. Turn off **Automatically connect Claude Code** in Pulse’s top-right menu to opt out. **Repair Claude connection** retries setup after a failure.
+**Claude Code:** Pulse automatically connects Claude Code when it detects your local Claude folder. It installs missing hooks, checks them again on launch, and refreshes the installed hook when a new Pulse version ships. Claude settings are backed up and existing hooks are preserved. Keep chats open and continue with your next message or tool action. Current Claude Code versions normally reload the settings automatically. If a chat does not appear, check `/hooks` in that chat. Hooks explicitly disabled in Claude settings are respected, and invalid settings are left unchanged. Open **Connections & setup** to check provider status or retry a failed connection.
 
 The connection needs Python 3 from Apple’s Command Line Tools. If it is missing, Pulse shows a setup message rather than launching the tools installer in the background.
 
@@ -26,8 +26,8 @@ For manual setup, run `python3 "/Applications/Pulse.app/Contents/Resources/setup
 
 - Hover the pill to expand, drag it to move, or press **Control–Space** to toggle. If another app or macOS already uses that shortcut, it may conflict.
 - A pill appears on each connected monitor by default. Turn off **Show pill on every display** in the panel's top-right menu to use a single pill. Hover or click one to open the panel there. Alerts play once, regardless of the number of displays.
-- Pin sessions to keep them in **Pinned**. **Working** shows running agents; **Waiting** shows today's unread replies and requests for input. Older activity goes in **Older**.
-- Use a row's three-dot menu to pin it or mark a reply read. Find it in Today or Pinned to mark it unread again. The same menu sets its completion tone from 1 (low) to 100 (high), with a preview and reset. Choices are saved only in Pulse.
+- Pin sessions to keep them in **Pinned**. **Working** shows running agents; **Waiting** groups today's unread replies above read replies. Its count includes only unread replies. Older activity goes in **Older**.
+- Opening a chat or sending another message marks its current reply read. Use a row's three-dot menu to pin it or change its read state. The same menu sets its completion tone from 1 (low) to 100 (high), with a preview and reset. Choices are saved only in Pulse.
 - A soft two-tap chime plays when a reply is ready; its pitch varies by session. Sound and launch-at-login controls are in the menu bar.
 
 Pulse relies on local data formats in Codex, Cursor, and Claude; future versions of those apps may need compatibility fixes. It tracks top-level locally indexed sessions, not every remote/cloud conversation. No auto-update service is included; replace the app with a newer ZIP to update.
