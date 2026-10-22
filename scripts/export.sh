@@ -13,6 +13,7 @@ ditto "build/Pulse.app" "$STAGE/Pulse.app"
 lipo -create .build/release/Pulse .build/intel/x86_64-apple-macosx/release/Pulse -output "$STAGE/Pulse.app/Contents/MacOS/Pulse"
 codesign --force --deep --sign - "$STAGE/Pulse.app"
 codesign --verify --deep --strict "$STAGE/Pulse.app"
+"$STAGE/Pulse.app/Contents/MacOS/Pulse" --verify-resources
 python3 scripts/setup-cursor.py --package-only
 cp build/pulse-router.vsix "$STAGE/"
 cp scripts/setup-claude.py scripts/claude-hook.py "$STAGE/Claude setup/"

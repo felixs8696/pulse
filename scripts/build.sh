@@ -14,6 +14,7 @@ cp -R .build/release/Pulse_Pulse.bundle "$APP/Contents/Resources/"
 swift -module-cache-path "$CLANG_MODULE_CACHE_PATH" scripts/make-icon.swift
 iconutil -c icns build/AppIcon.iconset -o "$APP/Contents/Resources/AppIcon.icns"
 codesign --force --deep --sign - "$APP"
+"$APP/Contents/MacOS/Pulse" --verify-resources
 echo "Built: $APP"
 if [[ "${1:-}" == "--run" ]]; then
   open "$APP"

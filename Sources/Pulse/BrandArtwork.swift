@@ -3,15 +3,10 @@ import SwiftUI
 
 /// Bundled provider artwork.
 enum BrandArtwork {
-    private static let resources: Bundle = {
-        if let url = Bundle.main.url(forResource: "Pulse_Pulse", withExtension: "bundle"),
-           let bundle = Bundle(url: url) { return bundle }
-        return .module
-    }()
     private static let images: [String: NSImage] = {
         var result: [String: NSImage] = [:]
         for name in ["claude", "cursor-light", "cursor-dark", "openai-light", "openai-dark"] {
-            if let url = resources.url(forResource: name, withExtension: "svg", subdirectory: "Logos"),
+            if let url = AppResources.bundle?.url(forResource: name, withExtension: "svg", subdirectory: "Logos"),
                let image = NSImage(contentsOf: url) {
                 image.isTemplate = false
                 result[name] = image

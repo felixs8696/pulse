@@ -13,7 +13,11 @@ extension Notification.Name {
 
 @main
 enum PulseMain {
+    @MainActor
     static func main() {
+        if CommandLine.arguments.contains("--verify-resources") {
+            exit(AppResources.verifyPackagedArtwork() ? 0 : 1)
+        }
         if CommandLine.arguments.contains("--diagnose-health") {
             ScanDiagnostics.run()
             return

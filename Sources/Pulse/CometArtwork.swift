@@ -38,7 +38,7 @@ struct CometArtwork: View {
 @MainActor
 enum CometPoseAtlas {
     static let poses: [NSImage] = {
-        guard let url = Bundle.module.url(forResource: "comet-poses", withExtension: "png", subdirectory: "Comet"),
+        guard let url = AppResources.bundle?.url(forResource: "comet-poses", withExtension: "png", subdirectory: "Comet"),
               let atlas = NSImage(contentsOf: url) else { return [] }
         let side = atlas.size.width / 3
         // Draw one cell from the bundled atlas without altering the original artwork.
