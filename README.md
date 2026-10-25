@@ -24,9 +24,9 @@
 
 ## How to use it
 
-Hover over the pill to open your session list. Each row shows your last message. Click a row to return to that session in its original app.
+Click the pill to open your session list. Each row shows your last message. Click a row to return to that session in its original app.
 
-- Hover over the pill to open the panel. Move away to collapse it. **⌃ Space** also shows or hides it.
+- Click the pill to open the panel. Move away to collapse it. **⌃ Space** also shows or hides it.
 - Drag the pill or the panel's title area to move them together.
 - Open a row's three-dot menu to pin it, mark a reply read or unread, or change its completion tone.
 - Search by message, title, or project.
@@ -61,7 +61,7 @@ Hover over the pill to open your session list. Each row shows your last message.
 
 1. **[Download the latest ZIP](https://github.com/felixs8696/pulse/releases/latest)** and unzip it.
 2. Drag **Pulse.app** into **Applications** and open it.
-3. Hover the pill to see your sessions. Press **⌃ Space** to show or hide the panel.
+3. Click the pill to see your sessions. Press **⌃ Space** to show or hide the panel.
 
 Sound and reply banners are on by default. Banners close after five seconds by default. You can choose a longer duration or keep them open until clicked. The pill appears on every display, and the panel starts on Pinned. You can change these settings in the app.
 

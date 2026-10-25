@@ -3,7 +3,7 @@
 Requires macOS 14 (Sonoma) or newer. Supports Apple Silicon and Intel Macs.
 
 1. Unzip the download and drag **Pulse.app** into **Applications**.
-2. Open it. A small floating pill appears; hover it to see your sessions.
+2. Open it. A small floating pill appears; click it to see your sessions.
 3. If macOS blocks opening it because the developer cannot be verified, use **System Settings → Privacy & Security → Open Anyway** after attempting to open it. Only do this for a copy you trust. This personal build is ad-hoc signed; it is not Developer ID signed or Apple-notarized. Managed Macs may prevent it from opening.
 
 The app discovers sessions belonging to the person running it. This download contains no sender session history, pins, read/unread state, credentials, or settings. No account, server, or API key is needed.
@@ -24,8 +24,8 @@ For manual setup, run `python3 "/Applications/Pulse.app/Contents/Resources/setup
 
 ## Use
 
-- Hover the pill to expand, drag it to move, or press **Control–Space** to toggle. If another app or macOS already uses that shortcut, it may conflict.
-- A pill appears on each connected monitor by default. Turn off **Show pill on every display** in the panel's top-right menu to use a single pill. Hover or click one to open the panel there. Alerts play once, regardless of the number of displays.
+- Click the pill to expand, drag it to move, or press **Control–Space** to toggle. If another app or macOS already uses that shortcut, it may conflict.
+- A pill appears on each connected monitor by default. Turn off **Show pill on every display** in the panel's top-right menu to use a single pill. Click one to open the panel there. Alerts play once, regardless of the number of displays.
 - Pin sessions to keep them in **Pinned**. **Working** shows running agents; **Waiting** groups today's unread replies above read replies. Its count includes only unread replies. Older activity goes in **Older**.
 - Opening a chat or sending another message marks its current reply read. Use a row's three-dot menu to pin it or change its read state. The same menu sets its completion tone from 1 (low) to 100 (high), with a preview and reset. Choices are saved only in Pulse.
 - A soft two-tap chime plays when a reply is ready; its pitch varies by session. Sound and launch-at-login controls are in the menu bar.

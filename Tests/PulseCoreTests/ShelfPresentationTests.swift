@@ -2,6 +2,18 @@ import Testing
 @testable import PulseCore
 
 struct ShelfPresentationTests {
+    @Test func hoverNeverOpensPanel() {
+        var panel = ShelfPresentation()
+        panel.applyHover(inside: true)
+        #expect(!panel.expanded)
+        panel.clickPill()
+        panel.applyHover(inside: true)
+        #expect(panel.expanded)
+        panel.applyHover(inside: false)
+        panel.applyHover(inside: true)
+        #expect(!panel.expanded)
+    }
+
     @Test func optInKeepsPanelOpenUntilSecondClick() {
         var panel = ShelfPresentation()
         panel.applyHover(inside: true)
@@ -18,9 +30,8 @@ struct ShelfPresentationTests {
         panel.clickPill(keepOpen: true)
         panel.releaseHold()
         #expect(!panel.heldOpen && !panel.expanded)
-        panel.pointerChanged(inside: false)
         panel.applyHover(inside: true)
-        #expect(panel.expanded)
+        #expect(!panel.expanded)
     }
 
     @Test func repeatedClicksNeverPinPreview() {
@@ -29,7 +40,6 @@ struct ShelfPresentationTests {
         panel.clickPill()
         panel.clickPill()
         #expect(panel.expanded)
-        panel.pointerChanged(inside: false)
         panel.applyHover(inside: false)
         #expect(!panel.expanded)
     }
@@ -42,15 +52,15 @@ struct ShelfPresentationTests {
         #expect(!panel.expanded)
     }
 
-    @Test func escapeSuppressesHoverUntilPointerReturns() {
+    @Test func escapeStaysClosedUntilAnotherClick() {
         var panel = ShelfPresentation()
         panel.show()
         panel.dismiss()
         panel.applyHover(inside: true)
         #expect(!panel.expanded)
-        panel.pointerChanged(inside: false)
-        panel.pointerChanged(inside: true)
         panel.applyHover(inside: true)
+        #expect(!panel.expanded)
+        panel.clickPill()
         #expect(panel.expanded)
     }
 

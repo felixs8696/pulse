@@ -147,7 +147,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         window.contentView = NSHostingView(rootView: ShelfPillView(store: store,
             onHover: { [weak self, weak window] inside in
                 guard let self, let window else { return }
-                if inside { _ = self.activatePill(window) }
                 guard self.panel === window else { return }
                 self.pillHovered = inside
                 self.updateHover()
@@ -250,7 +249,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         hoverTask?.cancel()
         guard !dragging, store.activeSessionActionsID == nil, !replyBanners.holdsUntilClicked else { return }
         let inside = pillHovered || shelfHovered
-        store.presentation.pointerChanged(inside: inside)
         hoverTask = Task { @MainActor [weak self] in
             try? await Task.sleep(for: .milliseconds(inside ? 160 : 550))
             guard !Task.isCancelled, let self else { return }

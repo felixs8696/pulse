@@ -226,7 +226,7 @@ struct ShelfView: View {
                     }.pickerStyle(.menu)
                     Button("Preview reply banner") { NotificationCenter.default.post(name: .previewReplyBanner, object: nil) }
                 }
-                Toggle("Click pill to keep panel open", isOn: $store.clickPillToKeepOpen)
+                Toggle("Keep panel open when clicked", isOn: $store.clickPillToKeepOpen)
                 Toggle("Show pill on every display", isOn: $store.pillOnEveryDisplay)
                 Button("Reset pill position") { NotificationCenter.default.post(name: .resetShelf, object: nil) }
                 Button("Quit Pulse", role: .destructive) { NSApplication.shared.terminate(nil) }
@@ -620,10 +620,10 @@ struct ShelfPillView: View {
     var body: some View {
         pillContent
             .contentShape(Capsule())
-            .help("\(store.runningCount) working · \(store.attentionCount) waiting today. Hover to open; \(store.clickPillToKeepOpen ? "click to keep open or collapse" : "move away to collapse"); drag to move.")
+            .help("\(store.runningCount) working · \(store.attentionCount) waiting today. Click to open; \(store.clickPillToKeepOpen ? "click to keep open or collapse" : "move away to collapse"); drag to move.")
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("Pulse. \(store.runningCount) working, \(store.attentionCount) waiting today")
-            .accessibilityValue(store.presentation.heldOpen ? "Kept open" : store.expanded ? "Hover preview" : "Collapsed")
+            .accessibilityValue(store.presentation.heldOpen ? "Kept open" : store.expanded ? "Expanded" : "Collapsed")
             .accessibilityAddTraits(.isButton)
             .accessibilityAction { onClick() }
             .overlay(DragHandle(onClick: onClick, onDragChange: onDragChange))
